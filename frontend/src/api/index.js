@@ -17,7 +17,9 @@ API.interceptors.request.use((req) => {
 API.interceptors.response.use(
     (response) => response,
     (error) => {
-        // Ensure error response structure exists
+        const status = error.response?.status ?? 0;
+
+        // Ensure error response structure exists for later parts
         if (!error.response) {
             error.response = { data: {} };
         }
@@ -33,10 +35,10 @@ API.interceptors.response.use(
             friendlyMessage = 'The request is taking too long due to a slow connection. Please try again.';
         }
         // 3. Server or Data Integrity Issues (e.g. data deleted manually)
-        else if (error.response.status >= 500) {
+        else if (status >= 500) {
             friendlyMessage = 'The server encountered an issue. Some data might be missing or temporarily unavailable.';
         } 
-        else if (error.response.status === 404) {
+        else if (status === 404) {
             if (!error.response.data.error) {
                 friendlyMessage = 'The requested data could not be found. It may have been deleted.';
             }

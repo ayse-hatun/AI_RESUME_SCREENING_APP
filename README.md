@@ -77,7 +77,13 @@ Create a `.env` file in the root directory (never commit this file!):
 PORT=3000
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_super_secret_jwt_key
+JWT_EXPIRE=7d
 GEMINI_API_KEY=your_google_gemini_api_key
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_gmail_app_password
+EMAIL_FROM="AI Resume Screener" <your_email@gmail.com>
+
+# Note: Check the `.env.example` file for the complete list of variables.
 ```
 
 ### 4. Launch the Application

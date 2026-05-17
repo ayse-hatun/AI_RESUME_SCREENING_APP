@@ -21,7 +21,7 @@ const CareersLanding = lazy(() => import('./pages/careers/Landing'));
 const CareersJobDetail = lazy(() => import('./pages/careers/JobDetail'));
 const CareersApply = lazy(() => import('./pages/careers/ApplyForm'));
 const CareersSuccess = lazy(() => import('./pages/careers/Success'));
-import { Menu } from 'lucide-react';
+
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');

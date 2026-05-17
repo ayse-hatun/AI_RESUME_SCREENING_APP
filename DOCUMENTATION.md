@@ -50,7 +50,7 @@ GEMINI_API_KEY=your_google_gemini_api_key
 TEST_TOKEN=your_test_jwt_token  # Required for running test scripts
 ADMIN_NAME=Admin User
 ADMIN_EMAIL=admin@smarthire.ai
-ADMIN_PASSWORD=password123
+ADMIN_PASSWORD=<YOUR_SECURE_PASSWORD>
 ```
 
 ### 3. Frontend Environment (Optional)
