@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ShieldCheck, Brain, Zap, Users, BarChart3, CheckCircle2,
@@ -23,11 +23,14 @@ const LandingNav = ({ isDark, toggleTheme }) => {
       animate={{ y: 0 }}
       transition={{ type: 'spring', damping: 20, stiffness: 100 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      scrolled ? 'bg-card/80 backdrop-blur-xl border-b border-border shadow-lg' : 'bg-transparent'
-    }`}>
+        scrolled 
+          ? 'bg-white/80 dark:bg-[#0a0f19]/80 backdrop-blur-xl border-b border-black/[0.04] dark:border-white/[0.04] shadow-[0_4px_30px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.2)]' 
+          : 'bg-transparent'
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white shadow-lg shadow-accent-primary/30 group-hover:scale-110 transition-transform overflow-hidden">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white shadow-[0_8px_20px_rgba(50,187,50,0.2)] group-hover:scale-105 group-hover:rotate-3 transition-transform duration-300 overflow-hidden">
             <img src="/logo.png" alt="SmartHire Logo" className="w-full h-full object-cover" />
           </div>
           <div>
@@ -39,8 +42,9 @@ const LandingNav = ({ isDark, toggleTheme }) => {
         <div className="hidden md:flex items-center gap-8">
           {['Features', 'How It Works', 'Pricing', 'About'].map(item => (
             <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`}
-              className="text-sm font-medium text-text-secondary hover:text-accent-primary transition-all duration-300 hover:scale-110 inline-block px-2 py-1 rounded-lg hover:bg-accent-primary/5">
+              className="text-sm font-semibold text-text-secondary hover:text-accent-primary transition-all duration-300 relative py-2 group">
               {item}
+              <span className="absolute bottom-0 left-0 w-full h-[2px] bg-accent-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
             </a>
           ))}
         </div>
@@ -48,42 +52,42 @@ const LandingNav = ({ isDark, toggleTheme }) => {
         {/* CTA Buttons */}
         <div className="hidden md:flex items-center gap-3">
           <button onClick={toggleTheme}
-            className="p-2 text-text-muted hover:text-accent-primary rounded-lg transition-colors">
+            className="p-2 text-text-muted hover:text-accent-primary hover:scale-110 active:scale-95 rounded-lg transition-all">
             {isDark ? <Sun size={17} /> : <Moon size={17} />}
           </button>
           <Link to="/login"
-            className="text-sm font-semibold text-text-secondary hover:text-text-primary px-4 py-2 rounded-xl hover:bg-border transition-all">
+            className="text-sm font-bold text-text-secondary hover:text-text-primary px-4 py-2.5 rounded-xl hover:bg-border/30 hover:scale-105 active:scale-95 transition-all">
             Sign In
           </Link>
           <Link to="/signup"
-            className="text-sm font-bold bg-accent-primary hover:bg-accent-primary/90 text-white px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-accent-primary/25 hover:shadow-accent-primary/40 hover:scale-105 active:scale-95">
+            className="text-sm font-bold bg-accent-primary hover:bg-accent-primary/95 text-white px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-accent-primary/20 hover:shadow-accent-primary/35 hover:-translate-y-0.5 active:translate-y-0 active:scale-98">
             Book My Free Demo
           </Link>
         </div>
 
         {/* Mobile Menu */}
         <div className="md:hidden flex items-center gap-2">
-          <button onClick={toggleTheme} className="p-2 text-text-muted rounded-lg">
+          <button onClick={toggleTheme} className="p-2 text-text-muted rounded-lg hover:scale-110 transition-all">
             {isDark ? <Sun size={17} /> : <Moon size={17} />}
           </button>
-          <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2 text-text-secondary">
+          <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2 text-text-secondary hover:scale-115 transition-all">
             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden bg-card border-b border-border px-6 py-4 space-y-3">
+        <div className="md:hidden bg-white/95 dark:bg-[#0a0f19]/95 backdrop-blur-xl border-b border-border/40 px-6 py-6 space-y-4">
           {['Features', 'How It Works', 'Pricing', 'About'].map(item => (
             <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`}
               onClick={() => setMobileOpen(false)}
-              className="block text-sm font-medium text-text-secondary py-2 hover:text-accent-primary transition-all duration-300 hover:scale-105 origin-left">
+              className="block text-base font-bold text-text-secondary py-2 hover:text-accent-primary transition-all duration-300 hover:translate-x-2">
               {item}
             </a>
           ))}
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-4 border-t border-border/30">
             <Link to="/login" onClick={() => setMobileOpen(false)}
-              className="flex-1 text-center text-sm font-semibold border border-border text-text-primary py-2.5 rounded-xl">
+              className="flex-1 text-center text-sm font-semibold border border-border/50 text-text-primary py-2.5 rounded-xl">
               Sign In
             </Link>
             <Link to="/signup" onClick={() => setMobileOpen(false)}
@@ -98,12 +102,12 @@ const LandingNav = ({ isDark, toggleTheme }) => {
 };
 
 const FeatureCard = ({ icon: Icon, color, title, desc }) => (
-  <div className="glass-card p-8 group hover:-translate-y-1 transition-all duration-300 hover:shadow-xl">
-    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-5 ${color} shadow-lg`}>
+  <div className="bg-white dark:bg-[#0f172a]/80 backdrop-blur-md p-8 rounded-2.5xl border border-black/[0.04] dark:border-white/[0.05] shadow-[0_15px_35px_-5px_rgba(0,0,0,0.04)] dark:shadow-[0_20px_45px_-10px_rgba(0,0,0,0.3)] hover:shadow-[0_25px_50px_-15px_rgba(50,187,50,0.12)] dark:hover:shadow-[0_25px_50px_-15px_rgba(50,187,50,0.18)] group hover:-translate-y-2 transition-all duration-300 relative overflow-hidden">
+    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-5 ${color} shadow-[0_10px_20px_rgba(0,0,0,0.06)]`}>
       <Icon size={22} className="text-white" />
     </div>
-    <h3 className="text-lg font-bold text-text-primary mb-2">{title}</h3>
-    <p className="text-text-secondary text-sm leading-relaxed">{desc}</p>
+    <h3 className="text-lg font-bold text-text-primary mb-2 group-hover:text-accent-primary transition-colors">{title}</h3>
+    <p className="text-text-secondary text-sm leading-relaxed font-medium">{desc}</p>
   </div>
 );
 
@@ -115,22 +119,22 @@ const StatItem = ({ value, label }) => (
 );
 
 const StepCard = ({ num, title, desc }) => (
-  <div className="flex gap-5 items-start">
-    <div className="w-10 h-10 min-w-[40px] rounded-2xl bg-accent-primary/10 border border-accent-primary/20 flex items-center justify-center text-accent-primary font-black text-sm">
+  <div className="flex gap-5 items-start p-4 hover:bg-white/50 dark:hover:bg-white/[0.02] rounded-2xl transition-all duration-300 group">
+    <div className="w-10 h-10 min-w-[40px] rounded-2xl bg-accent-primary/10 border border-accent-primary/20 flex items-center justify-center text-accent-primary font-black text-sm group-hover:scale-110 transition-transform duration-300">
       {num}
     </div>
     <div>
-      <h4 className="font-bold text-text-primary mb-1">{title}</h4>
-      <p className="text-text-secondary text-sm leading-relaxed">{desc}</p>
+      <h4 className="font-bold text-text-primary mb-1 group-hover:text-accent-primary transition-colors">{title}</h4>
+      <p className="text-text-secondary text-sm leading-relaxed font-medium">{desc}</p>
     </div>
   </div>
 );
 
 const TestimonialCard = ({ name, role, company, text }) => (
-  <div className="bg-white dark:bg-white/5 p-8 rounded-2xl border border-border/50 shadow-sm hover:shadow-md transition-shadow">
+  <div className="bg-white dark:bg-[#0f172a]/80 backdrop-blur-md p-8 rounded-2.5xl border border-black/[0.04] dark:border-white/[0.05] shadow-[0_15px_35px_-5px_rgba(0,0,0,0.04)] dark:shadow-[0_20px_45px_-10px_rgba(0,0,0,0.3)] hover:-translate-y-1.5 transition-all duration-300">
     <div className="flex gap-1 mb-4">
       {[...Array(5)].map((_, i) => (
-        <Star key={i} size={14} className="text-accent-primary fill-accent-primary" />
+        <Star key={i} size={14} className="text-yellow-500 fill-yellow-500" />
       ))}
     </div>
     <p className="text-text-secondary text-base leading-relaxed mb-6 font-medium">"{text}"</p>
@@ -166,8 +170,42 @@ const FAQItem = ({ question, answer }) => {
   );
 };
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 90,
+      damping: 18
+    }
+  }
+};
+
 const Landing = () => {
   const [isDark, setIsDark] = useState(true);
+  const heroRef = useRef(null);
+
+  const handleMouseMove = (e) => {
+    if (!heroRef.current) return;
+    const rect = heroRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    heroRef.current.style.setProperty('--mouse-x', `${x}px`);
+    heroRef.current.style.setProperty('--mouse-y', `${y}px`);
+  };
 
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains('dark'));
@@ -213,219 +251,319 @@ const Landing = () => {
       <LandingNav isDark={isDark} toggleTheme={toggleTheme} />
 
       {/* HERO */}
-      <section className="relative pt-32 pb-32 px-6 overflow-hidden min-h-[90vh] flex items-center">
-        {/* Background Glows with Motion */}
-        <div className="absolute inset-0 pointer-events-none">
-          <motion.div 
-            animate={{ 
-              scale: [1, 1.1, 1],
-              opacity: [0.3, 0.5, 0.3],
-              x: [0, 20, 0],
-              y: [0, -20, 0]
+      <section 
+        id="hero"
+        ref={heroRef}
+        onMouseMove={handleMouseMove}
+        className="relative pt-32 pb-32 px-6 overflow-hidden min-h-[95vh] flex items-center group/hero"
+        style={{
+          background: isDark 
+            ? 'linear-gradient(180deg, #090b11 0%, #061011 50%, #090e1a 100%)' 
+            : 'linear-gradient(180deg, #f8fafc 0%, #f0fdf4 50%, #eff6ff 100%)'
+        }}
+      >
+        {/* Subtle Base Grid Pattern Overlay */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, ${isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)'} 1px, transparent 1px),
+              linear-gradient(to bottom, ${isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)'} 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px',
+          }}
+        />
+
+        {/* Dynamic Glowing Hover Grid Pattern Layer (Responsive to Mouse position and shifts dynamically) */}
+        <div 
+          className="absolute inset-0 pointer-events-none opacity-0 group-hover/hero:opacity-100 transition-opacity duration-700"
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, ${isDark ? 'rgba(16,185,129,0.22)' : 'rgba(16,185,129,0.18)'} 1.5px, transparent 1.5px),
+              linear-gradient(to bottom, ${isDark ? 'rgba(16,185,129,0.22)' : 'rgba(16,185,129,0.18)'} 1.5px, transparent 1.5px)
+            `,
+            backgroundSize: '50px 50px',
+            transform: 'scale(1.002) translate(calc(var(--mouse-x, 0px) * 0.003), calc(var(--mouse-y, 0px) * 0.003))',
+            transition: 'transform 0.15s cubic-bezier(0.1, 0.8, 0.25, 1), opacity 0.5s ease',
+            maskImage: 'radial-gradient(circle 180px at var(--mouse-x, 0px) var(--mouse-y, 0px), black 20%, transparent 100%)',
+            WebkitMaskImage: 'radial-gradient(circle 180px at var(--mouse-x, 0px) var(--mouse-y, 0px), black 20%, transparent 100%)',
+          }}
+        />
+
+        {/* Aurora Gradient Blobs */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* Green Blurred Blob */}
+          <motion.div
+            animate={{
+              x: [0, 30, 0],
+              y: [0, -20, 0],
+              scale: [1, 1.08, 1],
             }}
-            transition={{ 
-              duration: 10, 
+            transition={{
+              duration: 20,
               repeat: Infinity,
               ease: "easeInOut"
             }}
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-accent-primary/20 rounded-full blur-[150px]" 
+            className="absolute top-1/4 left-1/4 w-[350px] h-[350px] rounded-full bg-emerald-500/15 blur-[120px]"
           />
-          <motion.div 
-            animate={{ 
-              scale: [1, 1.2, 1],
-              opacity: [0.1, 0.2, 0.1],
-              x: [0, -30, 0],
-              y: [0, 30, 0]
+          {/* Blue Blurred Blob */}
+          <motion.div
+            animate={{
+              x: [0, -40, 0],
+              y: [0, 30, 0],
+              scale: [1, 1.12, 1],
             }}
-            transition={{ 
-              duration: 15, 
+            transition={{
+              duration: 24,
               repeat: Infinity,
               ease: "easeInOut"
             }}
-            className="absolute -top-24 left-1/4 w-[500px] h-[400px] bg-accent-secondary/10 rounded-full blur-[100px]" 
+            className="absolute top-1/3 right-1/4 w-[450px] h-[450px] rounded-full bg-blue-500/15 blur-[120px]"
           />
         </div>
- 
-        <div className="relative max-w-6xl mx-auto text-center flex flex-col items-center">
-          {/* Badge */}
+
+        {/* Main Composition Wrapper */}
+        <div className="relative max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center z-10 px-4">
+          
+          {/* Left Column - Content */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            whileHover={{ scale: 1.05 }}
-            className="inline-flex items-center gap-2 bg-white/5 dark:bg-accent-primary/10 border border-accent-primary/20 text-accent-primary px-5 py-2 rounded-full text-xs font-bold uppercase tracking-widest mb-10 shadow-2xl shadow-accent-primary/5 cursor-default"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="lg:col-span-7 flex flex-col items-start text-left relative"
           >
-            <Sparkles size={14} className="animate-pulse" />
-            Next-Gen AI Recruitment
-          </motion.div>
- 
-          {/* Headline */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            <h1 className="text-6xl md:text-8xl font-black text-text-primary leading-[1] tracking-tight mb-8 max-w-5xl">
+            {/* Aurora Glow Behind Text (Green & Blue) */}
+            <div className="absolute -inset-10 pointer-events-none -z-10 overflow-hidden select-none opacity-40 dark:opacity-35">
+              <div className="absolute top-12 left-10 w-80 h-80 rounded-full bg-emerald-500/20 dark:bg-emerald-500/15 blur-[100px] animate-pulse" />
+              <div className="absolute bottom-12 right-20 w-80 h-80 rounded-full bg-blue-500/20 dark:bg-blue-500/15 blur-[100px] animate-pulse" style={{ animationDelay: '3s' }} />
+            </div>
+
+            {/* Badge */}
+            <motion.div 
+              variants={itemVariants}
+              whileHover={{ scale: 1.02 }}
+              className="inline-flex items-center gap-2 bg-white/5 dark:bg-accent-primary/10 border border-accent-primary/20 text-accent-primary px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-6 shadow-2xl shadow-accent-primary/5 cursor-default"
+            >
+              <Sparkles size={13} className="animate-pulse" />
+              Next-Gen AI Recruitment
+            </motion.div>
+
+            {/* Headline */}
+            <motion.h1 
+              variants={itemVariants}
+              className="text-5xl md:text-6xl font-black text-text-primary leading-[1.1] tracking-tight mb-6 max-w-2xl"
+            >
               Hire the Best Talent<br />
               <motion.span 
                 animate={{ 
                   color: ['#6366F1', '#10B981', '#6366F1'],
                 }}
                 transition={{ duration: 8, repeat: Infinity }}
-                className="text-accent-primary inline-block mt-2"
+                className="text-accent-primary inline-block mt-1"
               >
                 Without the Manual Grind.
               </motion.span>
-            </h1>
-          </motion.div>
- 
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-xl md:text-2xl text-text-secondary max-w-3xl leading-relaxed mb-12 font-medium"
-          >
-            SmartHire uses <span className="text-text-primary font-bold">Gemini AI</span> to rank resumes with 95% accuracy, so you can stop filtering and start hiring your dream team in minutes.
-          </motion.p>
- 
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.6 }}
-            className="flex flex-wrap items-center justify-center gap-8 text-sm text-text-muted font-bold mb-20"
-          >
-            {[
-              { text: "No credit card required", icon: CheckCircle2 },
-              { text: "Setup in 5 minutes", icon: CheckCircle2 },
-              { text: "Enterprise Grade", icon: CheckCircle2 }
-            ].map((item, i) => (
-              <motion.div 
-                key={i}
-                whileHover={{ y: -2, color: 'var(--color-accent-primary)' }}
-                className="flex items-center gap-2 transition-colors cursor-default"
+            </motion.h1>
+
+            {/* Paragraph */}
+            <motion.p 
+              variants={itemVariants}
+              className="text-lg md:text-xl text-text-secondary max-w-xl leading-relaxed mb-8 font-medium"
+            >
+              SmartHire uses <span className="text-text-primary font-bold">Gemini AI</span> to rank resumes with 95% accuracy, so you can stop filtering and start hiring your dream team in minutes.
+            </motion.p>
+
+            {/* Direct signup inline form or simple premium CTA button group */}
+            <motion.div 
+              variants={itemVariants}
+              className="w-full max-w-lg mb-8 z-20"
+            >
+              <form 
+                className="flex flex-col sm:flex-row gap-3 w-full bg-white dark:bg-[#0f172a]/90 p-2.5 sm:p-3 rounded-2.5xl border border-border/50 shadow-[0_20px_50px_rgba(50,187,50,0.08)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.45)] focus-within:ring-4 focus-within:ring-accent-primary/15 focus-within:border-accent-primary/50 transition-all duration-300"
+                onSubmit={(e) => { e.preventDefault(); window.location.href = '/signup'; }}
               >
-                <item.icon size={18} className="text-accent-primary" /> {item.text}
-              </motion.div>
-            ))}
-          </motion.div>
-   
-          {/* Demo/Sign-up Form Card */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9, y: 40 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ 
-              type: "spring",
-              damping: 20,
-              stiffness: 100,
-              delay: 0.8 
-            }}
-            className="w-full max-w-3xl relative"
-          >
-            {/* Decorative background for card */}
-            <div className="absolute -inset-4 bg-gradient-to-r from-accent-primary/20 via-accent-secondary/20 to-accent-primary/20 rounded-[3rem] blur-2xl opacity-50 -z-10 animate-pulse" />
-            
-            <div className="bg-white dark:bg-[#0f172a] p-10 md:p-14 rounded-[3rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] dark:shadow-[0_50px_100px_-20px_rgba(0,0,0,0.4)] border border-white/20 dark:border-white/5 relative overflow-hidden group">
-              {/* Animated Top border */}
-              <motion.div 
-                animate={{ 
-                  backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-                }}
-                transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-                className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-accent-primary via-accent-secondary to-accent-primary bg-[length:200%_auto]" 
-              />
-              
-              <div className="relative z-10">
-                <motion.h3 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1.1 }}
-                  className="text-4xl font-black text-text-primary mb-4"
+                <input 
+                  type="email" 
+                  required
+                  placeholder="Enter your work email" 
+                  className="flex-1 bg-transparent px-5 py-3.5 outline-none font-semibold text-text-primary text-sm placeholder:text-text-muted/50"
+                />
+                <motion.button 
+                  whileHover={{ y: -2, scale: 1.02, boxShadow: '0 12px 25px -4px rgba(50, 187, 50, 0.4)' }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit"
+                  className="bg-accent-primary hover:bg-accent-primary/95 text-white px-7 py-3.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2"
                 >
-                  Experience the Future
-                </motion.h3>
-                <p className="text-text-secondary text-lg mb-10 font-medium">Join 500+ forward-thinking teams using AI to scale.</p>
-                
-                <form className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left" onSubmit={(e) => { e.preventDefault(); window.location.href = '/signup'; }}>
-                  <motion.div 
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 1.2 }}
-                    className="space-y-2"
+                  Get Started <ArrowRight size={16} />
+                </motion.button>
+              </form>
+            </motion.div>
+
+            {/* Trust indicators */}
+            <motion.div 
+              variants={itemVariants}
+              className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-4 border-t border-border/50 w-full max-w-md"
+            >
+              <div className="flex -space-x-3">
+                {[1,2,3,4].map(i => (
+                  <div 
+                    key={i} 
+                    className="w-8 h-8 rounded-full border-2 border-card bg-accent-primary/10 flex items-center justify-center text-[10px] font-bold text-accent-primary overflow-hidden shadow-md"
                   >
-                    <label className="text-[11px] font-black uppercase tracking-widest text-text-muted ml-2 flex items-center gap-2">
-                      <Mail size={12} /> Work Email
-                    </label>
-                    <input 
-                      type="email" 
-                      required
-                      placeholder="name@company.com" 
-                      className="w-full bg-background/50 border border-border px-6 py-5 rounded-2xl outline-none focus:ring-4 focus:ring-accent-primary/10 focus:border-accent-primary transition-all font-semibold placeholder:text-text-muted/50"
-                    />
-                  </motion.div>
-                  <motion.div 
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 1.2 }}
-                    className="space-y-2"
-                  >
-                    <label className="text-[11px] font-black uppercase tracking-widest text-text-muted ml-2 flex items-center gap-2">
-                      <Briefcase size={12} /> Company Name
-                    </label>
-                    <input 
-                      type="text" 
-                      required
-                      placeholder="e.g. Acme Corp" 
-                      className="w-full bg-background/50 border border-border px-6 py-5 rounded-2xl outline-none focus:ring-4 focus:ring-accent-primary/10 focus:border-accent-primary transition-all font-semibold placeholder:text-text-muted/50"
-                    />
-                  </motion.div>
-                  <motion.button 
-                    whileHover={{ scale: 1.02, boxShadow: '0 20px 40px -10px rgba(99, 102, 241, 0.4)' }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    className="md:col-span-2 w-full bg-accent-primary text-white py-6 rounded-2xl font-black text-2xl transition-all shadow-2xl shadow-accent-primary/30 mt-4 flex items-center justify-center gap-4 group overflow-hidden relative"
-                  >
-                    <motion.div 
-                      className="absolute inset-0 bg-white/20 translate-x-[-100%]"
-                      whileHover={{ x: '100%' }}
-                      transition={{ duration: 0.6 }}
-                    />
-                    <span className="relative z-10">Claim My Free Demo</span>
-                    <ArrowRight size={28} className="group-hover:translate-x-2 transition-transform relative z-10" />
-                  </motion.button>
-                </form>
-                
-                <div className="flex flex-col md:flex-row items-center justify-center gap-8 mt-12 pt-10 border-t border-border/50">
-                  <div className="flex -space-x-4">
-                    {[1,2,3,4,5].map(i => (
-                      <motion.div 
-                        key={i} 
-                        initial={{ opacity: 0, scale: 0.5 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 1.5 + (i * 0.1) }}
-                        whileHover={{ y: -5, zIndex: 50 }}
-                        className="w-12 h-12 rounded-full border-4 border-card bg-accent-primary/10 flex items-center justify-center text-[10px] font-bold text-accent-primary overflow-hidden shadow-xl"
-                      >
-                        <img src={`https://i.pravatar.cc/150?u=user${i+20}`} alt="User" className="w-full h-full object-cover" />
-                      </motion.div>
-                    ))}
+                    <img src={`https://i.pravatar.cc/100?u=user${i+25}`} alt="User" className="w-full h-full object-cover" />
                   </div>
-                  <div className="text-center md:text-left">
-                    <div className="flex items-center justify-center md:justify-start gap-1 mb-1">
-                      {[1,2,3,4,5].map(i => <Star key={i} size={14} className="text-yellow-500 fill-yellow-500" />)}
+                ))}
+              </div>
+              <div className="text-left">
+                <div className="flex items-center gap-0.5 mb-0.5">
+                  {[1,2,3,4,5].map(i => <Star key={i} size={11} className="text-yellow-500 fill-yellow-500" />)}
+                </div>
+                <p className="text-[11px] text-text-muted font-bold uppercase tracking-widest">
+                  Trusted by <span className="text-text-primary">2,500+ Hiring Managers</span>
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          {/* Right Column - Premium Floating SaaS Dashboard Card */}
+          <div className="lg:col-span-5 flex justify-center relative">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ 
+                opacity: 1, 
+                scale: 1, 
+                y: [0, -8, 0]
+              }}
+              transition={{
+                y: {
+                  duration: 8,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                },
+                opacity: { duration: 0.8, delay: 0.5 },
+                scale: { type: "spring", stiffness: 80, damping: 18, delay: 0.5 }
+              }}
+              className="w-full max-w-sm bg-white dark:bg-[#0f172a]/95 backdrop-blur-md rounded-[2.5rem] shadow-[0_30px_70px_rgba(0,0,0,0.08)] dark:shadow-[0_35px_80px_rgba(0,0,0,0.55)] border border-black/5 dark:border-white/10 p-6 space-y-6 relative overflow-hidden z-20"
+            >
+              {/* Card top border glow effect (Red Screening Sensor Laser) */}
+              <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-red-500 via-rose-500 to-red-500 shadow-[0_1px_10px_rgba(239,68,68,0.5)] animate-pulse" />
+
+              {/* Header section of dashboard */}
+              <div className="flex items-center justify-between pb-3 border-b border-border/60">
+                <div className="flex items-center gap-2.5">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-primary/60 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent-primary"></span>
+                  </span>
+                  <span className="text-xs font-bold text-text-primary uppercase tracking-widest">Smart AI Reviewer</span>
+                </div>
+                <span className="text-[10px] font-bold text-accent-primary bg-accent-primary/10 px-2 py-0.5 rounded-full">Candidate Feed</span>
+              </div>
+
+              {/* Candidate Section (With restricted back-and-forth laser scanner) */}
+              <div className="relative overflow-hidden rounded-2xl space-y-3 p-1">
+                {/* Alternate Back-and-Forth Laser Scanner Line */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden z-10 rounded-2xl">
+                  <div 
+                    className="w-full h-[5px] bg-gradient-to-r from-red-500/80 via-rose-500 to-red-500/80 shadow-[0_0_12px_rgba(239,68,68,0.7)]" 
+                    style={{
+                      animation: 'scan 4.5s ease-in-out infinite alternate',
+                    }}
+                  />
+                </div>
+
+                {/* Candidate Item 1 */}
+                <div className="flex items-center gap-3 p-3 bg-accent-primary/[0.02] dark:bg-white/[0.01] border border-border rounded-xl">
+                  <div className="w-9 h-9 rounded-full overflow-hidden border border-border/60 shadow-sm flex-shrink-0">
+                    <img 
+                      src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&h=150&q=80" 
+                      alt="Sophia Vance Professional Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className="font-bold text-text-primary text-xs truncate">Sophia Vance</p>
+                      <span className="text-[9px] font-extrabold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">96% MATCH</span>
                     </div>
-                    <p className="text-xs text-text-muted font-bold uppercase tracking-widest">
-                      Trusted by <span className="text-text-primary">2,500+ Hiring Managers</span>
-                    </p>
+                    <p className="text-[10px] text-text-muted mt-0.5 truncate">Senior Backend Engineer</p>
+                  </div>
+                </div>
+
+                {/* Candidate Item 2 */}
+                <div className="flex items-center gap-3 p-3 bg-accent-primary/[0.02] dark:bg-white/[0.01] border border-border rounded-xl">
+                  <div className="w-9 h-9 rounded-full overflow-hidden border border-border/60 shadow-sm flex-shrink-0">
+                    <img 
+                      src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150&q=80" 
+                      alt="Marcus Chen Professional Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className="font-bold text-text-primary text-xs truncate">Marcus Chen</p>
+                      <span className="text-[9px] font-extrabold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">89% MATCH</span>
+                    </div>
+                    <p className="text-[10px] text-text-muted mt-0.5 truncate">Full Stack Developer</p>
                   </div>
                 </div>
               </div>
-            </div>
-          </motion.div>
+
+              {/* Skills Analysis breakdown */}
+              <div className="space-y-3 pt-2">
+                <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">AI Skill Match Breakdown</p>
+                <div className="space-y-2">
+                  <div>
+                    <div className="flex justify-between text-[10px] font-medium text-text-secondary mb-1">
+                      <span>System Architecture</span>
+                      <span className="font-bold text-text-primary">94%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
+                      <div className="h-full bg-accent-primary rounded-full" style={{ width: '94%' }} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-[10px] font-medium text-text-secondary mb-1">
+                      <span>Node.js / Express</span>
+                      <span className="font-bold text-text-primary">90%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
+                      <div className="h-full bg-accent-secondary rounded-full" style={{ width: '90%' }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mini Decision Verdict widget */}
+              <div className="p-3 bg-accent-primary/5 dark:bg-accent-primary/10 border border-accent-primary/10 rounded-xl flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded bg-accent-primary/20 flex items-center justify-center">
+                    <Sparkles size={11} className="text-accent-primary" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-extrabold text-text-primary">AI Verdict</p>
+                    <p className="text-[9px] text-text-secondary">Recommendation: Shortlist</p>
+                  </div>
+                </div>
+                <span className="text-[9px] font-extrabold text-white bg-accent-primary px-2.5 py-1 rounded-lg shadow-sm shadow-accent-primary/30">
+                  Highly Recommended
+                </span>
+              </div>
+
+            </motion.div>
+          </div>
+
         </div>
       </section>
 
       {/* STATS */}
-      <section className="py-20 px-6 bg-[#08544A] text-white">
+      <motion.section 
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+        className="py-20 px-6 bg-[#08544A] text-white"
+      >
         <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12">
           <div className="text-center">
             <div className="text-5xl font-black mb-2">10×</div>
@@ -444,10 +582,17 @@ const Landing = () => {
             <div className="text-white/70 text-xs font-bold uppercase tracking-widest">Global Teams</div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* FEATURES */}
-      <section id="features" className="py-24 px-6">
+      <motion.section 
+        id="features" 
+        initial={{ opacity: 0, y: 25 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+        className="py-24 px-6"
+      >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <div className="inline-block text-xs font-bold uppercase tracking-widest text-accent-primary bg-accent-primary/10 px-3 py-1 rounded-full mb-4">Features</div>
@@ -458,10 +603,17 @@ const Landing = () => {
             {features.map((f, i) => <FeatureCard key={i} {...f} />)}
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* HOW IT WORKS */}
-      <section id="how-it-works" className="py-24 px-6 bg-card/20 border-y border-border">
+      <motion.section 
+        id="how-it-works" 
+        initial={{ opacity: 0, y: 25 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+        className="py-24 px-6 bg-card/20 border-y border-border"
+      >
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
           <div>
             <div className="inline-block text-xs font-bold uppercase tracking-widest text-accent-secondary bg-accent-secondary/10 px-3 py-1 rounded-full mb-6">How It Works</div>
@@ -509,10 +661,17 @@ const Landing = () => {
             })}
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* PRICING */}
-      <section id="pricing" className="py-24 px-6">
+      <motion.section 
+        id="pricing" 
+        initial={{ opacity: 0, y: 25 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+        className="py-24 px-6"
+      >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16 animate-slide-up">
             <div className="inline-block text-xs font-bold uppercase tracking-widest text-accent-primary bg-accent-primary/10 px-3 py-1 rounded-full mb-4">Pricing</div>
@@ -520,55 +679,61 @@ const Landing = () => {
             <p className="text-text-secondary text-lg max-w-2xl mx-auto">Start for free. Upgrade when your team grows.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 max-w-6xl mx-auto gap-8">
-            
             {/* Plan 1: Free */}
-            <div className="glass-card p-10 hover:-translate-y-2 transition-all duration-300">
+            <div className="bg-white dark:bg-[#0f172a]/80 backdrop-blur-md p-10 rounded-2.5xl border border-black/[0.04] dark:border-white/[0.05] shadow-[0_15px_35px_-5px_rgba(0,0,0,0.04)] dark:shadow-[0_20px_45px_-10px_rgba(0,0,0,0.3)] hover:-translate-y-2 transition-all duration-300">
               <h3 className="text-2xl font-bold text-text-primary mb-2">Starter</h3>
-              <p className="text-text-secondary mb-6">Perfect for small teams and startups.</p>
+              <p className="text-text-secondary mb-6 font-medium">Perfect for small teams and startups.</p>
               <div className="text-5xl font-black text-text-primary mb-8">$0<span className="text-lg text-text-muted font-medium">/mo</span></div>
               <ul className="space-y-4 mb-10">
-                <li className="flex items-center gap-3 text-text-secondary"><CheckCircle2 size={18} className="text-accent-secondary" /> Up to 3 active jobs</li>
-                <li className="flex items-center gap-3 text-text-secondary"><CheckCircle2 size={18} className="text-accent-secondary" /> 50 AI resume screenings/mo</li>
-                <li className="flex items-center gap-3 text-text-secondary"><CheckCircle2 size={18} className="text-accent-secondary" /> Basic Kanban board</li>
+                <li className="flex items-center gap-3 text-text-secondary font-medium"><CheckCircle2 size={18} className="text-accent-secondary" /> Up to 3 active jobs</li>
+                <li className="flex items-center gap-3 text-text-secondary font-medium"><CheckCircle2 size={18} className="text-accent-secondary" /> 50 AI resume screenings/mo</li>
+                <li className="flex items-center gap-3 text-text-secondary font-medium"><CheckCircle2 size={18} className="text-accent-secondary" /> Basic Kanban board</li>
               </ul>
-              <Link to="/signup" className="btn-secondary w-full py-3 flex justify-center text-sm font-bold">Get Started Free</Link>
+              <Link to="/signup" className="btn-secondary w-full py-3 flex justify-center text-sm font-bold rounded-xl">Get Started Free</Link>
             </div>
 
             {/* Plan 2: Medium */}
-            <div className="glass-card p-10 border-accent-primary/30 relative transition-all duration-300 transform hover:-translate-y-2 md:hover:-translate-y-4 shadow-xl">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-accent-primary text-white text-xs font-bold uppercase tracking-widest px-4 py-1 rounded-full shadow-lg">Most Popular</div>
+            <div className="bg-white dark:bg-[#0f172a]/95 backdrop-blur-md p-10 border border-accent-primary/30 dark:border-accent-primary/20 relative rounded-2.5xl shadow-[0_30px_60px_-10px_rgba(50,187,50,0.15)] dark:shadow-[0_35px_70px_rgba(0,0,0,0.45)] transition-all duration-300 transform hover:-translate-y-2 md:hover:-translate-y-4">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-accent-primary text-white text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg shadow-accent-primary/20">Most Popular</div>
               <h3 className="text-2xl font-bold text-text-primary mb-2">Growth</h3>
-              <p className="text-text-secondary mb-6">For scaling teams handling more hiring.</p>
+              <p className="text-text-secondary mb-6 font-medium">For scaling teams handling more hiring.</p>
               <div className="text-5xl font-black text-text-primary mb-8">$49<span className="text-lg text-text-muted font-medium">/mo</span></div>
               <ul className="space-y-4 mb-10">
-                <li className="flex items-center gap-3 text-text-secondary"><CheckCircle2 size={18} className="text-accent-secondary" /> Up to 15 active jobs</li>
-                <li className="flex items-center gap-3 text-text-secondary"><CheckCircle2 size={18} className="text-accent-secondary" /> 500 AI resume screenings/mo</li>
-                <li className="flex items-center gap-3 text-text-secondary"><CheckCircle2 size={18} className="text-accent-secondary" /> Bulk resume upload</li>
-                <li className="flex items-center gap-3 text-text-secondary"><CheckCircle2 size={18} className="text-accent-secondary" /> Team collaboration (5 users)</li>
+                <li className="flex items-center gap-3 text-text-secondary font-medium"><CheckCircle2 size={18} className="text-accent-secondary" /> Up to 15 active jobs</li>
+                <li className="flex items-center gap-3 text-text-secondary font-medium"><CheckCircle2 size={18} className="text-accent-secondary" /> 500 AI resume screenings/mo</li>
+                <li className="flex items-center gap-3 text-text-secondary font-medium"><CheckCircle2 size={18} className="text-accent-secondary" /> Bulk resume upload</li>
+                <li className="flex items-center gap-3 text-text-secondary font-medium"><CheckCircle2 size={18} className="text-accent-secondary" /> Team collaboration (5 users)</li>
               </ul>
-              <Link to="/signup" className="btn-primary w-full py-3 flex justify-center text-sm font-bold shadow-lg shadow-accent-primary/20">Upgrade to Growth</Link>
+              <Link to="/signup" className="btn-primary w-full py-3 flex justify-center text-sm font-bold rounded-xl shadow-lg shadow-accent-primary/20">Upgrade to Growth</Link>
             </div>
 
             {/* Plan 3: Unlimited */}
-            <div className="glass-card p-10 hover:-translate-y-2 transition-all duration-300">
+            <div className="bg-white dark:bg-[#0f172a]/80 backdrop-blur-md p-10 rounded-2.5xl border border-black/[0.04] dark:border-white/[0.05] shadow-[0_15px_35px_-5px_rgba(0,0,0,0.04)] dark:shadow-[0_20px_45px_-10px_rgba(0,0,0,0.3)] hover:-translate-y-2 transition-all duration-300">
               <h3 className="text-2xl font-bold text-text-primary mb-2">Enterprise</h3>
-              <p className="text-text-secondary mb-6">For large organizations without limits.</p>
+              <p className="text-text-secondary mb-6 font-medium">For large organizations without limits.</p>
               <div className="text-5xl font-black text-text-primary mb-8">$199<span className="text-lg text-text-muted font-medium">/mo</span></div>
               <ul className="space-y-4 mb-10">
-                <li className="flex items-center gap-3 text-text-secondary"><CheckCircle2 size={18} className="text-accent-secondary" /> Unlimited active jobs</li>
-                <li className="flex items-center gap-3 text-text-secondary"><CheckCircle2 size={18} className="text-accent-secondary" /> Unlimited AI screenings</li>
-                <li className="flex items-center gap-3 text-text-secondary"><CheckCircle2 size={18} className="text-accent-secondary" /> Advanced analytics & reporting</li>
-                <li className="flex items-center gap-3 text-text-secondary"><CheckCircle2 size={18} className="text-accent-secondary" /> API Access & Integrations</li>
+                <li className="flex items-center gap-3 text-text-secondary font-medium"><CheckCircle2 size={18} className="text-accent-secondary" /> Unlimited active jobs</li>
+                <li className="flex items-center gap-3 text-text-secondary font-medium"><CheckCircle2 size={18} className="text-accent-secondary" /> Unlimited AI screenings</li>
+                <li className="flex items-center gap-3 text-text-secondary font-medium"><CheckCircle2 size={18} className="text-accent-secondary" /> Advanced analytics & reporting</li>
+                <li className="flex items-center gap-3 text-text-secondary font-medium"><CheckCircle2 size={18} className="text-accent-secondary" /> API Access & Integrations</li>
               </ul>
-              <Link to="/signup" className="btn-secondary w-full py-3 flex justify-center text-sm font-bold">Contact Sales</Link>
+              <Link to="/signup" className="btn-secondary w-full py-3 flex justify-center text-sm font-bold rounded-xl">Contact Sales</Link>
             </div>
 
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ABOUT */}
-      <section id="about" className="py-24 px-6 bg-card/20 border-t border-border">
+      <motion.section 
+        id="about" 
+        initial={{ opacity: 0, y: 25 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+        className="py-24 px-6 bg-card/20 border-t border-border"
+      >
         <div className="max-w-4xl mx-auto text-center animate-slide-up">
           <div className="inline-block text-xs font-bold uppercase tracking-widest text-accent-secondary bg-accent-secondary/10 px-3 py-1 rounded-full mb-6">About Us</div>
           <h2 className="text-3xl md:text-5xl font-black text-text-primary mb-8 leading-tight">Built by recruiters,<br/>powered by AI.</h2>
@@ -582,10 +747,16 @@ const Landing = () => {
             <div className="w-16 h-1 bg-accent-primary/20 rounded-full"></div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* TESTIMONIALS */}
-      <section className="py-24 px-6 bg-background">
+      <motion.section 
+        initial={{ opacity: 0, y: 25 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+        className="py-24 px-6 bg-background"
+      >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <div className="inline-block text-xs font-bold uppercase tracking-widest text-accent-primary bg-accent-primary/10 px-3 py-1 rounded-full mb-4">Success Stories</div>
@@ -595,10 +766,16 @@ const Landing = () => {
             {testimonials.map((t, i) => <TestimonialCard key={i} {...t} />)}
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* FAQs */}
-      <section className="py-24 px-6 bg-card/30 border-y border-border">
+      <motion.section 
+        initial={{ opacity: 0, y: 25 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+        className="py-24 px-6 bg-card/30 border-y border-border"
+      >
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-black text-text-primary mb-4">Frequently Asked Questions</h2>
@@ -623,10 +800,16 @@ const Landing = () => {
             />
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* FINAL CTA */}
-      <section className="py-24 px-6">
+      <motion.section 
+        initial={{ opacity: 0, y: 25 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+        className="py-24 px-6"
+      >
         <div className="max-w-4xl mx-auto relative">
           <div className="absolute inset-0 bg-gradient-to-r from-accent-primary/20 via-accent-secondary/10 to-accent-secondary/20 rounded-3xl blur-xl" />
           <div className="relative glass-card p-16 text-center">
@@ -658,7 +841,7 @@ const Landing = () => {
             </p>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* FOOTER */}
       <footer className="border-t border-border bg-card/40">
