@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚀 AI Resume Screening Platform
+#  AI Resume Screening Platform
 
 **Transforming Recruitment with Generative AI Intelligence**
 

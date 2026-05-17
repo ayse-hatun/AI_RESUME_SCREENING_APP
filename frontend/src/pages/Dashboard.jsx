@@ -139,7 +139,7 @@ const Dashboard = () => {
       <div className="glass-card overflow-hidden">
         <div className="p-6 border-b border-border flex justify-between items-center bg-white/[0.02]">
           <h2 className="text-xl font-bold text-text-primary">Active Job Pipelines</h2>
-          <button className="text-accent-primary font-medium hover:underline text-sm transition-all">View all jobs</button>
+          <button onClick={() => navigate('/app/jobs')} className="text-accent-primary font-medium hover:underline text-sm transition-all">View all jobs</button>
         </div>
         <div className="divide-y divide-border">
           {error ? (

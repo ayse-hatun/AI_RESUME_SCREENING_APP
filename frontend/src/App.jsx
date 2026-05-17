@@ -69,6 +69,13 @@ function App() {
     };
   }, []);
 
+  // Open sidebar automatically when changing pages inside the app
+  useEffect(() => {
+    if (location.pathname.startsWith('/app')) {
+      handleSidebarEnter();
+    }
+  }, [location.pathname]);
+
   return (
     <div className="min-h-screen bg-background">
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><div className="w-12 h-12 border-4 border-accent-primary border-t-transparent rounded-full animate-spin"></div></div>}>
@@ -91,6 +98,14 @@ function App() {
           element={
             <ProtectedRoute>
               <div className="flex w-full relative">
+                {/* Invisible hover zone on the left edge to reopen sidebar */}
+                {!isSidebarOpen && (
+                  <div 
+                    className="fixed top-0 left-0 w-20 h-screen z-40 bg-transparent"
+                    onMouseEnter={handleSidebarEnter}
+                  />
+                )}
+                
                 {!isSidebarOpen && (
                   <div className="fixed top-6 left-6 z-50 flex flex-col gap-3 animate-fade-in">
                     <button
@@ -122,7 +137,7 @@ function App() {
                   onMouseEnter={handleSidebarEnter}
                   onMouseLeave={handleSidebarLeave}
                 />
-                <main className={`flex-1 bg-indigo-glow bg-no-repeat bg-top transition-all duration-500 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-0 pl-20 md:pl-24'}`}>
+                <main className={`flex-1 bg-indigo-glow bg-no-repeat bg-top transition-all duration-200 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-0 pl-20 md:pl-24'}`}>
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="jobs" element={<Jobs />} />

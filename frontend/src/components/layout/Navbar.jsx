@@ -82,7 +82,7 @@ const Navbar = ({ isOpen = true, onMouseEnter, onMouseLeave }) => {
     <nav 
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={`w-64 bg-[#08544A] h-screen fixed left-0 top-0 flex flex-col p-6 z-40 transition-transform duration-500 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      className={`w-64 bg-[#08544A] h-screen fixed left-0 top-0 flex flex-col p-6 z-40 transition-transform duration-200 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
     >
       {/* Brand */}
       <div className="flex items-center justify-between px-2 mb-12">
