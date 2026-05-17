@@ -30,8 +30,8 @@ const LandingNav = ({ isDark, toggleTheme }) => {
     >
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white shadow-[0_8px_20px_rgba(50,187,50,0.2)] group-hover:scale-105 group-hover:rotate-3 transition-transform duration-300 overflow-hidden">
-            <img src="/logo.png" alt="SmartHire Logo" className="w-full h-full object-cover" />
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-transparent group-hover:scale-105 group-hover:rotate-3 transition-transform duration-300 overflow-hidden">
+            <img src="/logo.png" alt="SmartHire Logo" className="w-full h-full object-contain" />
           </div>
           <div>
             <span className="text-lg font-black text-text-primary tracking-tight">SmartHire</span>
