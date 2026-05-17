@@ -195,7 +195,7 @@ const itemVariants = {
 };
 
 const Landing = () => {
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
   const heroRef = useRef(null);
 
   const handleMouseMove = (e) => {
@@ -468,7 +468,7 @@ const Landing = () => {
               {/* Candidate Section */}
               <div className="relative space-y-3 p-1">
                 {/* Candidate Item 1 */}
-                <div className="flex items-center gap-3 p-3 bg-accent-primary/[0.02] dark:bg-white/[0.01] border border-border rounded-xl">
+                <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/[0.02] border border-border/60 dark:border-white/[0.05] rounded-xl">
                   <div className="w-9 h-9 rounded-full overflow-hidden border border-border/60 shadow-sm flex-shrink-0">
                     <img 
                       src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&h=150&q=80" 
@@ -486,7 +486,7 @@ const Landing = () => {
                 </div>
 
                 {/* Candidate Item 2 */}
-                <div className="flex items-center gap-3 p-3 bg-accent-primary/[0.02] dark:bg-white/[0.01] border border-border rounded-xl">
+                <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/[0.02] border border-border/60 dark:border-white/[0.05] rounded-xl">
                   <div className="w-9 h-9 rounded-full overflow-hidden border border-border/60 shadow-sm flex-shrink-0">
                     <img 
                       src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150&q=80" 
@@ -916,8 +916,11 @@ const Landing = () => {
           </div>
 
           {/* Bottom Bar */}
-          <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex flex-col items-center md:items-end gap-6">
+          <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="text-xs text-text-muted font-medium text-center md:text-left">
+              &copy; {new Date().getFullYear()} SmartHire AI. All rights reserved.
+            </div>
+            <div className="flex flex-col items-center md:items-end gap-4">
               <Link to="/signup" className="btn-primary flex items-center gap-2 px-8 py-3 shadow-xl shadow-accent-primary/20">
                 Book My Free Demo <ArrowRight size={18} />
               </Link>

@@ -3,6 +3,20 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 
+// Synchronously initialize theme to avoid FOUC and state race conditions
+(function() {
+  let theme = localStorage.getItem('theme');
+  if (theme !== 'dark' && theme !== 'light') {
+    theme = 'dark'; // Default theme is dark
+  }
+  if (theme === 'dark') {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+  localStorage.setItem('theme', theme);
+})();
+
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);

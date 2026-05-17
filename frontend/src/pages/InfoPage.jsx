@@ -19,7 +19,7 @@ const sections = [
 
 const InfoPage = () => {
   const { hash } = useLocation();
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
 
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains('dark'));
@@ -63,12 +63,12 @@ const InfoPage = () => {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 bg-gradient-to-br from-accent-primary to-indigo-500 rounded-xl flex items-center justify-center">
-              <ShieldCheck size={18} className="text-white" />
+            <div className="w-9 h-9 rounded-full flex items-center justify-center bg-transparent group-hover:scale-105 group-hover:rotate-3 transition-transform duration-300 overflow-hidden">
+              <img src="/logo.png" alt="SmartHire Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <span className="text-lg font-black text-text-primary tracking-tight">SmartHire</span>
-              <span className="text-[9px] text-accent-primary font-black uppercase tracking-widest block leading-none">Information</span>
+              <span className="text-[9px] text-accent-primary font-black uppercase tracking-widest block leading-none whitespace-nowrap">Information</span>
             </div>
           </Link>
           <div className="flex items-center gap-4">
