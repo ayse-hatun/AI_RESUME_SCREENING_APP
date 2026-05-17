@@ -445,8 +445,13 @@ const Landing = () => {
               }}
               className="w-full max-w-sm bg-white dark:bg-[#0f172a]/95 backdrop-blur-md rounded-[2.5rem] shadow-[0_30px_70px_rgba(0,0,0,0.08)] dark:shadow-[0_35px_80px_rgba(0,0,0,0.55)] border border-black/5 dark:border-white/10 p-6 space-y-6 relative overflow-hidden z-20"
             >
-              {/* Card top border glow effect (Red Screening Sensor Laser) */}
-              <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-red-500 via-rose-500 to-red-500 shadow-[0_1px_10px_rgba(239,68,68,0.5)] animate-pulse" />
+              {/* Single card-wide active Red Screening Scanner Laser (Sweeps exactly 50% height of card) */}
+              <div 
+                className="absolute inset-x-0 h-[5px] bg-gradient-to-r from-red-500 via-rose-500 to-red-500 shadow-[0_0_12px_rgba(239,68,68,0.9)] z-30 pointer-events-none" 
+                style={{
+                  animation: 'scan-half 4s ease-in-out infinite alternate',
+                }}
+              />
 
               {/* Header section of dashboard */}
               <div className="flex items-center justify-between pb-3 border-b border-border/60">
@@ -460,18 +465,8 @@ const Landing = () => {
                 <span className="text-[10px] font-bold text-accent-primary bg-accent-primary/10 px-2 py-0.5 rounded-full">Candidate Feed</span>
               </div>
 
-              {/* Candidate Section (With restricted back-and-forth laser scanner) */}
-              <div className="relative overflow-hidden rounded-2xl space-y-3 p-1">
-                {/* Alternate Back-and-Forth Laser Scanner Line */}
-                <div className="absolute inset-0 pointer-events-none overflow-hidden z-10 rounded-2xl">
-                  <div 
-                    className="w-full h-[5px] bg-gradient-to-r from-red-500/80 via-rose-500 to-red-500/80 shadow-[0_0_12px_rgba(239,68,68,0.7)]" 
-                    style={{
-                      animation: 'scan 4.5s ease-in-out infinite alternate',
-                    }}
-                  />
-                </div>
-
+              {/* Candidate Section */}
+              <div className="relative space-y-3 p-1">
                 {/* Candidate Item 1 */}
                 <div className="flex items-center gap-3 p-3 bg-accent-primary/[0.02] dark:bg-white/[0.01] border border-border rounded-xl">
                   <div className="w-9 h-9 rounded-full overflow-hidden border border-border/60 shadow-sm flex-shrink-0">

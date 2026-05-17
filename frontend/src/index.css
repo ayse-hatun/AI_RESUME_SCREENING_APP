@@ -207,3 +207,8 @@ html {
   0% { transform: translateY(-100%); }
   100% { transform: translateY(200%); }
 }
+
+@keyframes scan-half {
+  0% { top: 0%; }
+  100% { top: 50%; }
+}
