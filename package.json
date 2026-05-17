@@ -1,29 +1,39 @@
 {
   "name": "ai_resume_screening_app",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "AI-powered resume screening and recruitment management platform",
+  "main": "src/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js"
   },
-  "keywords": [],
+  "keywords": ["ai", "recruitment", "resume", "screening"],
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
+    "@google/genai": "^2.2.0",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.1.0",
+    "hpp": "^0.2.3",
+    "jsonwebtoken": "^9.0.2",
     "mammoth": "^1.12.0",
+    "mongodb": "3.7",
     "mongoose": "^9.3.2",
     "multer": "^2.1.1",
     "nodemailer": "^8.0.5",
-    "nodemon": "^3.1.14",
     "pdf-parse": "^1.1.1"
   },
   "devDependencies": {
+    "nodemon": "^3.1.14",
     "pdfkit": "^0.18.0"
   }
 }

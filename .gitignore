@@ -10,7 +10,7 @@
 # Node modules
 node_modules/
 
-# Uploaded resume files
+# Uploaded resume files (ephemeral on Render)
 uploads/
 
 # OS files
@@ -20,3 +20,34 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Build output
+dist/
+build/
+
+# Batch scripts (may contain secrets)
+*.bat
+
+# ─── Temp / Debug / Test Scripts ───────────────────────────────
+# These are one-off debugging files, not production code
+test-*.js
+fix_resumes.js
+check-models.js
+cleanup.js
+debug-key.js
+find-model.js
+list-models-raw.js
+*.test.pdf
+test-resume.pdf
+
+# ─── Stale Directories ──────────────────────────────────────────
+color palatte/
+scratch/
+
+# ─── Package manager lock (optional but keep package-lock.json) ─
+# Keep package-lock.json for reproducible installs

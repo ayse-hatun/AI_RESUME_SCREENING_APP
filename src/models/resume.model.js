@@ -44,8 +44,8 @@ const resumeSchema = new mongoose.Schema({
         required: true
     },
     fileType: {
-        type: String,           // 'pdf' or 'docx'
-        enum: ['pdf', 'docx']
+        type: String,           // 'pdf', 'docx', or 'txt'
+        enum: ['pdf', 'docx', 'txt']
     },
 
     // Extracted Resume Text
@@ -86,6 +86,52 @@ const resumeSchema = new mongoose.Schema({
         default: 'pending'
     },
     errorMessage: {
+        type: String,
+        default: null
+    },
+
+    // Pipeline Stage
+    pipelineStage: {
+        type: String,
+        enum: ['applied', 'screened', 'shortlisted', 'rejected', 'hired'],
+        default: 'applied'
+    },
+    pipelineStageChangedAt: {
+        type: Date,
+        default: Date.now
+    },
+    shortlistedAt: {
+        type: Date,
+        default: null
+    },
+
+    // Extracted Candidate Profile (Structured Data)
+    avatarUrl: {
+        type: String,
+        default: null
+    },
+    candidateProfile: {
+        location: String,
+        totalExperienceYears: Number,
+        expectedSalary: String,
+        noticePeriod: String,
+        university: String,
+        availability: String
+    },
+    skillProficiency: [{
+        skill: String,
+        level: String,
+        percentage: Number
+    }],
+    employmentHistory: [{
+        company: String,
+        role: String,
+        duration: String,
+        description: String
+    }],
+
+    // AI Annotation / Note
+    aiNote: {
         type: String,
         default: null
     }
