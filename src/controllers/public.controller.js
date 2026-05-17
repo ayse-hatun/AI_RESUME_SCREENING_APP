@@ -106,18 +106,20 @@ exports.submitApplication = async (req, res) => {
             pipelineStage: 'applied'
         });
 
-        // 4. Trigger AI screening in the background
+        // 4. Trigger AI screening in the background (fully decoupled)
         const fileExt = path.extname(req.file.originalname).toLowerCase().replace('.', '');
-        processResumeBackground(
-            application._id, 
-            fileExt, 
-            req.file.path, 
-            resolvedName, 
-            resolvedEmail, 
-            job.title, 
-            job.description, 
-            job._id
-        );
+        setTimeout(() => {
+            processResumeBackground(
+                application._id, 
+                fileExt, 
+                req.file.path, 
+                resolvedName, 
+                resolvedEmail, 
+                job.title, 
+                job.description, 
+                job._id
+            );
+        }, 50);
 
         res.status(201).json({
             success: true,

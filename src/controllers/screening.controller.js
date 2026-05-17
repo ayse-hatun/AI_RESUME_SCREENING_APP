@@ -123,8 +123,10 @@ async function screenResumeHandler(req, res) {
             }
         });
 
-        // 4️⃣ Process in the background
-        processResumeBackground(newResume._id, fileExt, req.file.path, candidateName, candidateEmail, jobTitle, jobDescription, jobId);
+        // 4️⃣ Process in the background (fully decoupled from request lifecycle)
+        setTimeout(() => {
+            processResumeBackground(newResume._id, fileExt, req.file.path, candidateName, candidateEmail, jobTitle, jobDescription, jobId);
+        }, 50);
 
     } catch (error) {
         console.error('❌ Upload error:', error.message);
@@ -444,13 +446,12 @@ async function updatePipelineStage(req, res) {
         }
         await resume.save();
 
-        // Optional email sending logic based on stage
+        // Optional email sending logic based on stage (non-blocking)
         if (['shortlisted', 'rejected', 'applied'].includes(stage) && sendEmail) {
-            try {
-                await sendStatusUpdateEmail(resume.candidateEmail, resume.candidateName, resume.jobTitle, stage);
-            } catch (err) {
-                console.error(`⚠️ Failed to send ${stage} email to ${resume.candidateEmail}:`, err.message);
-            }
+            sendStatusUpdateEmail(resume.candidateEmail, resume.candidateName, resume.jobTitle, stage)
+                .catch(err => {
+                    console.error(`⚠️ Failed to send ${stage} email to ${resume.candidateEmail}:`, err.message);
+                });
         }
 
         return res.status(200).json({ success: true, data: resume });
