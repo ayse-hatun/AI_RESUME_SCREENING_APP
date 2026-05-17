@@ -27,8 +27,8 @@ const LandingNav = ({ isDark, toggleTheme }) => {
     }`}>
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 bg-accent-primary rounded-xl flex items-center justify-center shadow-lg shadow-accent-primary/30 group-hover:scale-110 transition-transform">
-            <ShieldCheck size={18} className="text-white" />
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white shadow-lg shadow-accent-primary/30 group-hover:scale-110 transition-transform overflow-hidden">
+            <img src="/logo.png" alt="SmartHire Logo" className="w-full h-full object-cover" />
           </div>
           <div>
             <span className="text-lg font-black text-text-primary tracking-tight">SmartHire</span>
@@ -630,8 +630,8 @@ const Landing = () => {
         <div className="max-w-4xl mx-auto relative">
           <div className="absolute inset-0 bg-gradient-to-r from-accent-primary/20 via-accent-secondary/10 to-accent-secondary/20 rounded-3xl blur-xl" />
           <div className="relative glass-card p-16 text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-accent-primary to-accent-secondary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-accent-primary/30">
-              <ShieldCheck size={32} className="text-white" />
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 bg-white shadow-2xl shadow-accent-primary/30 overflow-hidden">
+              <img src="/logo.png" alt="SmartHire Logo" className="w-full h-full object-cover" />
             </div>
             <h2 className="text-4xl md:text-5xl font-black text-text-primary mb-4">
               Ready to hire smarter?
@@ -667,8 +667,8 @@ const Landing = () => {
             {/* Brand */}
             <div className="md:col-span-2 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-accent-primary rounded-xl flex items-center justify-center">
-                  <ShieldCheck size={18} className="text-white" />
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white overflow-hidden">
+                  <img src="/logo.png" alt="SmartHire Logo" className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <span className="text-lg font-black text-text-primary">SmartHire</span>

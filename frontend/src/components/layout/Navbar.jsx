@@ -87,8 +87,8 @@ const Navbar = ({ isOpen = true, onMouseEnter, onMouseLeave }) => {
       {/* Brand */}
       <div className="flex items-center justify-between px-2 mb-12">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-accent-primary rounded-xl flex items-center justify-center text-white shadow-xl shadow-accent-primary/20">
-            <ShieldCheck size={24} />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white shadow-xl shadow-accent-primary/20 overflow-hidden">
+            <img src="/logo.png" alt="SmartHire Logo" className="w-full h-full object-cover" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-white tracking-tight">SmartHire</h1>
