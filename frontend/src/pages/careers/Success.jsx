@@ -28,7 +28,7 @@ const CareersSuccess = () => {
         
         <div className="glass-card p-10 mb-12 animate-slide-up">
           <p className="text-xl text-text-secondary mb-8 leading-relaxed">
-            Your application was submitted successfully. Our hiring team and AI engine are currently reviewing your profile.
+            Your application was submitted successfully. Our hiring team is currently reviewing your profile.
           </p>
           
           <div className="space-y-4 text-left">
@@ -80,7 +80,7 @@ const CareersSuccess = () => {
         </div>
         
         <p className="mt-12 text-text-tertiary text-xs">
-          SmartHire AI | Powered by Gemini Pro
+          SmartHire | Careers Portal
         </p>
       </div>
     </div>
