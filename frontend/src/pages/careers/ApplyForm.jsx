@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { fetchPublicJobById, applyPublic } from '../../api';
 import { ArrowLeft, User, Mail, Phone, Upload, FileText, CheckCircle, Loader2, AlertCircle, X } from 'lucide-react';
 
 const CareersApply = () => {
@@ -31,7 +31,7 @@ const CareersApply = () => {
 
     const fetchJob = async () => {
       try {
-        const response = await axios.get(`/api/public/jobs/${jobId}`);
+        const response = await fetchPublicJobById(jobId);
         if (response.data.success) {
           setJob(response.data.data);
         }
@@ -85,9 +85,7 @@ const CareersApply = () => {
     data.append('resume', file);
 
     try {
-      const response = await axios.post('/api/public/apply', data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const response = await applyPublic(data);
 
       if (response.data.success) {
         // Save to localStorage to remember they applied

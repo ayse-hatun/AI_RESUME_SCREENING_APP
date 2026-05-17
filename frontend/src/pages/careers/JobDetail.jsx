@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { fetchPublicJobById } from '../../api';
 import { ArrowLeft, MapPin, Building2, Calendar, Briefcase, ChevronRight, Loader2, Info, CheckCircle } from 'lucide-react';
 
 const CareersJobDetail = () => {
@@ -20,7 +20,7 @@ const CareersJobDetail = () => {
 
     const fetchJob = async () => {
       try {
-        const response = await axios.get(`/api/public/jobs/${jobId}`);
+        const response = await fetchPublicJobById(jobId);
         if (response.data.success) {
           setJob(response.data.data);
         }
