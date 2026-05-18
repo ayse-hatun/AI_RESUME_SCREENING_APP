@@ -106,7 +106,7 @@ const PipelineColumn = ({ title, resumes, color, onCardClick, onDelete, onRetry,
                    resume.screeningResult?.matchScore >= 50 ? 'bg-amber-500/10 text-amber-500' : 'bg-accent-danger/10 text-accent-danger')
                 : resume.status === 'failed' ? 'bg-accent-danger/10 text-accent-danger'
                 : 'bg-white/5 text-text-muted'
-            }">
+            }`}>
               {resume.status === 'completed' ? `AI Score: ${resume.screeningResult?.matchScore}%` 
                 : resume.status === 'failed' ? '✕ Failed' 
                 : 'Screening...'}
