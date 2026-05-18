@@ -105,12 +105,9 @@ exports.register = async (req, res) => {
         const originUrl = origins.find(o => o.includes('5173')) || origins[0];
         const verifyUrl = `${originUrl}/verify-email?email=${encodeURIComponent(user.email)}&otp=${otpCode}`;
 
-        // Send OTP Email
-        try {
-            await sendVerificationEmail(user.email, user.name, otpCode, verifyUrl);
-        } catch (err) {
-            console.error('Failed to send verification email', err);
-        }
+        // Send OTP Email in the background so it doesn't block the HTTP response
+        sendVerificationEmail(user.email, user.name, otpCode, verifyUrl)
+            .catch(err => console.error('❌ Failed to send verification email in background:', err.message));
 
         res.status(201).json({
             success: true,

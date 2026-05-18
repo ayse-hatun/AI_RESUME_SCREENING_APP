@@ -10,6 +10,9 @@ const mongoSanitize = require('express-mongo-sanitize');
 const hpp = require('hpp');
 const app = express();
 
+// Trust proxy for correct client IP detection behind reverse proxies (like Render, Vercel, etc.)
+app.set('trust proxy', 1);
+
 // Set global timeout (2 minutes for bulk uploads)
 const serverTimeout = 120000;
 app.use((req, res, next) => {
