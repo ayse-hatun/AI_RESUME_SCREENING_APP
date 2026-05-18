@@ -39,6 +39,8 @@ Please provide a structured JSON response with the following fields:
   "recommendation": "<Final hiring recommendation in 1 sentence>",
   
   "candidateProfile": {
+    "name": "<Extracted candidate full name or null>",
+    "email": "<Extracted candidate email address or null>",
     "location": "<Extracted location or null>",
     "totalExperienceYears": <Extracted number of years or 0>,
     "university": "<Extracted university name or null>",

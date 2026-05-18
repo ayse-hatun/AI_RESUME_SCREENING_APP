@@ -332,31 +332,59 @@ async function processResumeBackground(resumeId, fileExt, filePath, candidateNam
             status: 'completed'
         };
 
+        // Resolve candidate email from AI if current email is placeholder
+        let resolvedEmail = candidateEmail;
+        if ((!candidateEmail || candidateEmail === 'bulk-upload@pending.ai') && aiResult.candidateProfile?.email) {
+            const emailRegex = /^\S+@\S+\.\S+$/;
+            const extractedEmail = aiResult.candidateProfile.email.trim().toLowerCase();
+            if (emailRegex.test(extractedEmail)) {
+                resolvedEmail = extractedEmail;
+                updateData.candidateEmail = resolvedEmail;
+                console.log(`📧 Resolved real email from CV: ${resolvedEmail}`);
+            }
+        }
+
+        // Resolve candidate name from AI if currently it's just a filename or placeholder
+        let resolvedName = candidateName;
+        if (aiResult.candidateProfile?.name) {
+            const extractedName = aiResult.candidateProfile.name.trim();
+            // Update if it's currently a placeholder or contains file extension dots
+            if (!candidateName || candidateName === 'bulk-upload' || candidateName.includes('.') || candidateName.toLowerCase().includes('resume')) {
+                resolvedName = extractedName;
+                updateData.candidateName = resolvedName;
+                console.log(`👤 Resolved real name from CV: ${resolvedName}`);
+            }
+        }
+
         // ─── Auto-Rejection Logic ───
         if (jobId && autoRejectionEnabled && aiResult.matchScore < autoRejectionThreshold) {
             updateData.pipelineStage = 'rejected';
             updateData.aiNote = `[AUTO-REJECTED] Score ${aiResult.matchScore} is below threshold (${autoRejectionThreshold}). ${aiResult.aiNote || ''}`;
-            console.log(`🚫 Background: Auto-rejected ${candidateName} (Score: ${aiResult.matchScore})`);
+            console.log(`🚫 Background: Auto-rejected ${resolvedName} (Score: ${aiResult.matchScore})`);
         }
 
         // Single atomic DB write with all results
         await Resume.findByIdAndUpdate(resumeId, updateData);
 
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-        console.log(`✅ Background: ${candidateName} completed in ${elapsed}s`);
+        console.log(`✅ Background: ${resolvedName} completed in ${elapsed}s`);
 
-        // Send result email to candidate (non-blocking, don't slow down processing)
-        sendScreeningResultEmail(candidateEmail, candidateName, jobTitle, aiResult)
-            .then(() => {
-                Resume.findByIdAndUpdate(resumeId, {
-                    emailSent: true,
-                    emailSentAt: new Date()
-                }).catch(() => {});
-                console.log(`📧 Background: Email sent to ${candidateEmail}`);
-            })
-            .catch(emailErr => {
-                console.error('⚠️ Background: Email send failed (non-critical):', emailErr.message);
-            });
+        // Send result email to candidate if we have a valid non-placeholder email
+        if (resolvedEmail && resolvedEmail !== 'bulk-upload@pending.ai') {
+            sendScreeningResultEmail(resolvedEmail, resolvedName, jobTitle, aiResult)
+                .then(() => {
+                    Resume.findByIdAndUpdate(resumeId, {
+                        emailSent: true,
+                        emailSentAt: new Date()
+                    }).catch(() => {});
+                    console.log(`📧 Background: Email sent to ${resolvedEmail}`);
+                })
+                .catch(emailErr => {
+                    console.error('⚠️ Background: Email send failed (non-critical):', emailErr.message);
+                });
+        } else {
+            console.log(`⚠️ Background: Skipping email sending, no real candidate email available.`);
+        }
 
     } catch (error) {
         console.error(`❌ Background processing error for resume ${resumeId}:`, error.message);

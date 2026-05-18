@@ -52,13 +52,22 @@ const CreateJobModal = ({ onClose, onJobCreated }) => {
   });
 
   const handleAddSkill = () => {
-    if (skillInput.trim() && !formData.requiredSkills.includes(skillInput.trim())) {
-      setFormData({
-        ...formData,
-        requiredSkills: [...formData.requiredSkills, skillInput.trim()]
-      });
-      setSkillInput('');
-    }
+    if (!skillInput.trim()) return;
+    
+    const parsedSkills = skillInput
+      .split(',')
+      .map(s => s.trim())
+      .filter(s => s !== '');
+    
+    const uniqueNewSkills = [...new Set(parsedSkills)].filter(
+      s => !formData.requiredSkills.includes(s)
+    );
+
+    setFormData({
+      ...formData,
+      requiredSkills: [...formData.requiredSkills, ...uniqueNewSkills]
+    });
+    setSkillInput('');
   };
 
   const removeSkill = (skillToRemove) => {
@@ -247,7 +256,7 @@ const CreateJobModal = ({ onClose, onJobCreated }) => {
               <input
                 type="text"
                 className="input-field flex-1"
-                placeholder="Type one skill & press + (e.g. React.js)"
+                placeholder="Type skills separated by comma & press + (e.g. React.js, Node.js)"
                 value={skillInput}
                 autoComplete="new-password"
                 onChange={(e) => setSkillInput(e.target.value)}
