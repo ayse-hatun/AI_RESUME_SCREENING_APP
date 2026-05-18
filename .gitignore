@@ -51,3 +51,9 @@ scratch/
 
 # ─── Package manager lock (optional but keep package-lock.json) ─
 # Keep package-lock.json for reproducible installs
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
