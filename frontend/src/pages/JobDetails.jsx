@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { fetchJobById, fetchResumes, updateResumeStage, deleteResume, retryResume } from '../api';
-import { MoreHorizontal, Plus, Search, Filter, Mail, Star, Ban, ChevronRight, Link, ArrowLeft, Trash2, AlertTriangle, Loader2, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { MoreHorizontal, Plus, Search, Filter, Mail, Star, Ban, ChevronRight, Link, ArrowLeft, Trash2, AlertTriangle, Loader2, RefreshCw, CheckCircle2, ExternalLink, CheckSquare } from 'lucide-react';
 import CandidateModal from '../components/modals/CandidateModal';
 import BulkUploadModal from '../components/modals/BulkUploadModal';
 
@@ -25,7 +25,19 @@ const getDisplayDate = (resume) => {
   return resume.updatedAt || resume.createdAt;
 };
 
-const PipelineColumn = ({ title, resumes, color, onCardClick, onDelete, onRetry, onAddClick, onUpdateStage }) => (
+const PipelineColumn = ({ title, resumes, color, onCardClick, onDelete, onRetry, onAddClick, onUpdateStage }) => {
+  const [colMenuOpen, setColMenuOpen] = React.useState(false);
+  const [cardMenuOpen, setCardMenuOpen] = React.useState(null); // stores resume._id
+
+  const handleDeleteAll = () => {
+    setColMenuOpen(false);
+    if (resumes.length === 0) return;
+    if (window.confirm(`Delete all ${resumes.length} candidate(s) in "${title}"? This cannot be undone.`)) {
+      resumes.forEach(r => onDelete(r._id, r.candidateName, true /* silent */));
+    }
+  };
+
+  return (
   <div className="flex-1 min-w-[300px] bg-card/30 rounded-2xl border border-border/50 p-4 flex flex-col h-[calc(100vh-200px)]">
     <div className="flex items-center justify-between mb-4 px-2">
       <div className="flex items-center gap-2">
@@ -33,7 +45,37 @@ const PipelineColumn = ({ title, resumes, color, onCardClick, onDelete, onRetry,
         <h3 className="font-bold text-text-primary uppercase tracking-wider text-xs">{title}</h3>
         <span className="bg-border px-2 py-0.5 rounded-full text-[10px] text-text-muted font-bold">{resumes.length}</span>
       </div>
-      <button className="text-text-muted hover:text-text-primary"><MoreHorizontal size={16} /></button>
+      {/* Column three-dot menu */}
+      <div className="relative">
+        <button
+          onClick={() => setColMenuOpen(o => !o)}
+          className="text-text-muted hover:text-text-primary p-1 rounded-lg hover:bg-border/50 transition-colors"
+        >
+          <MoreHorizontal size={16} />
+        </button>
+        {colMenuOpen && (
+          <>
+            <div className="fixed inset-0 z-20" onClick={() => setColMenuOpen(false)} />
+            <div className="absolute right-0 top-7 z-30 w-44 bg-card border border-border rounded-xl shadow-xl overflow-hidden animate-fade-in">
+              <button
+                onClick={() => { setColMenuOpen(false); }}
+                disabled={resumes.length === 0}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-text-primary hover:bg-border/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <CheckSquare size={13} /> Select All ({resumes.length})
+              </button>
+              <div className="h-px bg-border mx-2" />
+              <button
+                onClick={handleDeleteAll}
+                disabled={resumes.length === 0}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-accent-danger hover:bg-accent-danger/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Trash2 size={13} /> Delete All ({resumes.length})
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
 
     <div className="space-y-3 overflow-y-auto pr-1 flex-1">
@@ -64,23 +106,42 @@ const PipelineColumn = ({ title, resumes, color, onCardClick, onDelete, onRetry,
                    resume.screeningResult?.matchScore >= 50 ? 'bg-amber-500/10 text-amber-500' : 'bg-accent-danger/10 text-accent-danger')
                 : resume.status === 'failed' ? 'bg-accent-danger/10 text-accent-danger'
                 : 'bg-white/5 text-text-muted'
-            }`}>
+            }">
               {resume.status === 'completed' ? `AI Score: ${resume.screeningResult?.matchScore}%` 
                 : resume.status === 'failed' ? '✕ Failed' 
                 : 'Screening...'}
             </div>
-            <div className="flex items-center gap-2">
-              <Star size={14} className="text-text-muted hover:text-yellow-500" />
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(resume._id, resume.candidateName);
-                }}
-                className="text-text-muted hover:text-accent-danger transition-colors p-1"
-                title="Delete Candidate"
+            {/* Card three-dot menu */}
+            <div className="relative">
+              <button
+                onClick={(e) => { e.stopPropagation(); setCardMenuOpen(cardMenuOpen === resume._id ? null : resume._id); }}
+                className="text-text-muted hover:text-text-primary p-1 rounded-lg hover:bg-border/50 transition-colors"
+                title="Options"
               >
-                <Trash2 size={14} />
+                <MoreHorizontal size={14} />
               </button>
+              {cardMenuOpen === resume._id && (
+                <>
+                  <div className="fixed inset-0 z-20" onClick={(e) => { e.stopPropagation(); setCardMenuOpen(null); }} />
+                  <div className="absolute right-0 top-7 z-30 w-44 bg-card border border-border rounded-xl shadow-xl overflow-hidden animate-fade-in">
+                    {resume.status === 'completed' && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setCardMenuOpen(null); onCardClick(resume); }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-text-primary hover:bg-border/60 transition-colors"
+                      >
+                        <ExternalLink size={13} /> View Profile
+                      </button>
+                    )}
+                    <div className="h-px bg-border mx-2" />
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setCardMenuOpen(null); onDelete(resume._id, resume.candidateName); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-accent-danger hover:bg-accent-danger/10 transition-colors"
+                    >
+                      <Trash2 size={13} /> Delete
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
           <h4 className="font-bold text-text-primary group-hover:text-accent-primary transition-colors">{resume.candidateName}</h4>
@@ -142,14 +203,15 @@ const PipelineColumn = ({ title, resumes, color, onCardClick, onDelete, onRetry,
       ))}
       
       <button 
-        onClick={onAddClick}
+        onClick={onAddClick}k}
         className="w-full py-3 border-2 border-dashed border-border rounded-xl text-text-muted hover:text-text-primary hover:border-text-muted transition-all text-xs font-bold flex items-center justify-center gap-2"
       >
         <Plus size={14} /> Add Candidate
       </button>
     </div>
   </div>
-);
+  );
+};
 
 
 
