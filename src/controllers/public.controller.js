@@ -117,7 +117,9 @@ exports.submitApplication = async (req, res) => {
                 resolvedEmail, 
                 job.title, 
                 job.description, 
-                job._id
+                job._id,
+                job.autoRejectionEnabled || false,
+                job.autoRejectionThreshold || 0
             );
         }, 50);
 

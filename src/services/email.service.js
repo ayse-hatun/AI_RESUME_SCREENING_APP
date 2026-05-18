@@ -78,7 +78,7 @@ async function sendScreeningResultEmail(toEmail, candidateName, jobTitle, screen
 `;
 
     const mailOptions = {
-        from: process.env.EMAIL_FROM,
+        from: process.env.EMAIL_FROM || `"AI Resume Screener" <${process.env.EMAIL_USER}>`,
         to: toEmail,
         subject: `Application Received – ${escapeHtml(jobTitle)}`,
         html: htmlContent
@@ -171,7 +171,7 @@ async function sendStatusUpdateEmail(toEmail, candidateName, jobTitle, stage) {
 `;
 
     const mailOptions = {
-        from: process.env.EMAIL_FROM,
+        from: process.env.EMAIL_FROM || `"AI Resume Screener" <${process.env.EMAIL_USER}>`,
         to: toEmail,
         subject: subject,
         html: htmlContent
@@ -234,7 +234,7 @@ async function sendVerificationEmail(toEmail, name, otpCode, verifyUrl) {
 `;
 
     const mailOptions = {
-        from: process.env.EMAIL_FROM,
+        from: process.env.EMAIL_FROM || `"AI Resume Screener" <${process.env.EMAIL_USER}>`,
         to: toEmail,
         subject: `Verify your email - ${escapeHtml(otpCode)}`,
         html: htmlContent
@@ -289,7 +289,7 @@ async function sendPasswordResetEmail(toEmail, name, resetUrl) {
 `;
 
     const mailOptions = {
-        from: process.env.EMAIL_FROM,
+        from: process.env.EMAIL_FROM || `"AI Resume Screener" <${process.env.EMAIL_USER}>`,
         to: toEmail,
         subject: `Reset Your Password`,
         html: htmlContent

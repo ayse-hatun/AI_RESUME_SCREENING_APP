@@ -203,7 +203,7 @@ const PipelineColumn = ({ title, resumes, color, onCardClick, onDelete, onRetry,
       ))}
       
       <button 
-        onClick={onAddClick}k}
+        onClick={onAddClick}
         className="w-full py-3 border-2 border-dashed border-border rounded-xl text-text-muted hover:text-text-primary hover:border-text-muted transition-all text-xs font-bold flex items-center justify-center gap-2"
       >
         <Plus size={14} /> Add Candidate

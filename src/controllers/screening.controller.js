@@ -357,10 +357,13 @@ async function processResumeBackground(resumeId, fileExt, filePath, candidateNam
         }
 
         // ─── Auto-Rejection Logic ───
-        if (jobId && autoRejectionEnabled && aiResult.matchScore < autoRejectionThreshold) {
+        const score = aiResult.matchScore !== undefined ? Number(aiResult.matchScore) : NaN;
+        const threshold = autoRejectionThreshold !== undefined ? Number(autoRejectionThreshold) : NaN;
+
+        if (jobId && autoRejectionEnabled && !isNaN(score) && !isNaN(threshold) && score < threshold) {
             updateData.pipelineStage = 'rejected';
-            updateData.aiNote = `[AUTO-REJECTED] Score ${aiResult.matchScore} is below threshold (${autoRejectionThreshold}). ${aiResult.aiNote || ''}`;
-            console.log(`🚫 Background: Auto-rejected ${resolvedName} (Score: ${aiResult.matchScore})`);
+            updateData.aiNote = `[AUTO-REJECTED] Score ${score}% is below threshold (${threshold}%). ${aiResult.aiNote || ''}`;
+            console.log(`🚫 Background: Auto-rejected ${resolvedName} (Score: ${score}%, Threshold: ${threshold}%)`);
         }
 
         // Single atomic DB write with all results
