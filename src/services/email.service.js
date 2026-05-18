@@ -15,6 +15,17 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
+// Helper to get a valid, safe FROM address
+function getFromAddress() {
+    if (process.env.EMAIL_FROM && process.env.EMAIL_FROM.trim()) {
+        return process.env.EMAIL_FROM.trim();
+    }
+    if (process.env.EMAIL_USER && process.env.EMAIL_USER.trim()) {
+        return `"AI Resume Screener" <${process.env.EMAIL_USER.trim()}>`;
+    }
+    return '"AI Resume Screener" <noreply@smarthire.ai>';
+}
+
 // Create reusable transporter using Gmail SMTP
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -78,7 +89,7 @@ async function sendScreeningResultEmail(toEmail, candidateName, jobTitle, screen
 `;
 
     const mailOptions = {
-        from: process.env.EMAIL_FROM || `"AI Resume Screener" <${process.env.EMAIL_USER}>`,
+        from: getFromAddress(),
         to: toEmail,
         subject: `Application Received – ${escapeHtml(jobTitle)}`,
         html: htmlContent
@@ -171,7 +182,7 @@ async function sendStatusUpdateEmail(toEmail, candidateName, jobTitle, stage) {
 `;
 
     const mailOptions = {
-        from: process.env.EMAIL_FROM || `"AI Resume Screener" <${process.env.EMAIL_USER}>`,
+        from: getFromAddress(),
         to: toEmail,
         subject: subject,
         html: htmlContent
@@ -234,7 +245,7 @@ async function sendVerificationEmail(toEmail, name, otpCode, verifyUrl) {
 `;
 
     const mailOptions = {
-        from: process.env.EMAIL_FROM || `"AI Resume Screener" <${process.env.EMAIL_USER}>`,
+        from: getFromAddress(),
         to: toEmail,
         subject: `Verify your email - ${escapeHtml(otpCode)}`,
         html: htmlContent
@@ -289,7 +300,7 @@ async function sendPasswordResetEmail(toEmail, name, resetUrl) {
 `;
 
     const mailOptions = {
-        from: process.env.EMAIL_FROM || `"AI Resume Screener" <${process.env.EMAIL_USER}>`,
+        from: getFromAddress(),
         to: toEmail,
         subject: `Reset Your Password`,
         html: htmlContent

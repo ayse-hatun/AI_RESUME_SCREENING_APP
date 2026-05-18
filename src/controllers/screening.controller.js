@@ -357,8 +357,8 @@ async function processResumeBackground(resumeId, fileExt, filePath, candidateNam
         }
 
         // ─── Auto-Rejection Logic ───
-        const score = aiResult.matchScore !== undefined ? Number(aiResult.matchScore) : NaN;
-        const threshold = autoRejectionThreshold !== undefined ? Number(autoRejectionThreshold) : NaN;
+        const score = aiResult.matchScore != null ? Number(aiResult.matchScore) : NaN;
+        const threshold = autoRejectionThreshold != null ? Number(autoRejectionThreshold) : NaN;
 
         if (jobId && autoRejectionEnabled && !isNaN(score) && !isNaN(threshold) && score < threshold) {
             updateData.pipelineStage = 'rejected';
