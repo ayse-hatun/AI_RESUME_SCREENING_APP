@@ -21,8 +21,11 @@ const CandidateModal = ({ resume, onClose, onUpdate }) => {
           const updatedResume = data.data;
           setCurrentResume(updatedResume);
           
-          if (updatedResume.screeningResult?.matchScore && updatedResume.status !== 'processing') {
+          if ((updatedResume.screeningResult?.matchScore && updatedResume.status !== 'processing') || updatedResume.status === 'failed') {
             setIsProcessing(false);
+            if (updatedResume.status === 'failed') {
+               setErrorMessage(updatedResume.errorMessage || 'AI Processing Failed. Please try again.');
+            }
             if (onUpdate) onUpdate(); // refresh parent list silently
             clearInterval(interval);
           }

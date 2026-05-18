@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { fetchJobById, fetchResumes, updateResumeStage, deleteResume, retryResume } from '../api';
-import { MoreHorizontal, Plus, Search, Filter, Mail, Star, Ban, ChevronRight, Link, ArrowLeft, Trash2, AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
+import { MoreHorizontal, Plus, Search, Filter, Mail, Star, Ban, ChevronRight, Link, ArrowLeft, Trash2, AlertTriangle, Loader2, RefreshCw, CheckCircle2 } from 'lucide-react';
 import CandidateModal from '../components/modals/CandidateModal';
 import BulkUploadModal from '../components/modals/BulkUploadModal';
 
@@ -25,7 +25,7 @@ const getDisplayDate = (resume) => {
   return resume.updatedAt || resume.createdAt;
 };
 
-const PipelineColumn = ({ title, resumes, color, onCardClick, onDelete, onRetry, onAddClick }) => (
+const PipelineColumn = ({ title, resumes, color, onCardClick, onDelete, onRetry, onAddClick, onUpdateStage }) => (
   <div className="flex-1 min-w-[300px] bg-card/30 rounded-2xl border border-border/50 p-4 flex flex-col h-[calc(100vh-200px)]">
     <div className="flex items-center justify-between mb-4 px-2">
       <div className="flex items-center gap-2">
@@ -120,6 +120,24 @@ const PipelineColumn = ({ title, resumes, color, onCardClick, onDelete, onRetry,
             </div>
             <div className="text-[10px] text-text-muted font-medium">{timeAgo(getDisplayDate(resume))}</div>
           </div>
+          
+          {/* Quick Actions */}
+          {resume.status === 'completed' && !['rejected', 'hired', 'shortlisted'].includes(resume.pipelineStage) && (
+            <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border/50">
+              <button
+                onClick={(e) => { e.stopPropagation(); onUpdateStage(resume._id, 'rejected'); }}
+                className="flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest text-accent-danger hover:bg-accent-danger/10 border border-accent-danger/20 rounded-lg transition-colors flex items-center justify-center gap-1"
+              >
+                <Ban size={12} /> Reject
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onUpdateStage(resume._id, 'shortlisted'); }}
+                className="flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest text-text-primary dark:text-gray-900 bg-accent-secondary hover:bg-accent-secondary/90 rounded-lg transition-colors flex items-center justify-center gap-1 shadow-sm"
+              >
+                <CheckCircle2 size={12} /> Shortlist
+              </button>
+            </div>
+          )}
         </div>
       ))}
       
@@ -221,6 +239,16 @@ const JobDetails = () => {
     }
   };
 
+  const handleUpdateStage = async (resumeId, stage) => {
+    try {
+      await updateResumeStage(resumeId, { stage, sendEmail: true });
+      loadData();
+    } catch (err) {
+      console.error('Failed to update stage:', err);
+      alert('Failed to update candidate stage.');
+    }
+  };
+
   useEffect(() => {
     loadData();
     // Poll for updates every 4 seconds if there are pending/processing resumes
@@ -304,6 +332,7 @@ const JobDetails = () => {
             onDelete={handleDeleteCandidate}
             onRetry={handleRetryResume}
             onAddClick={handleAddCandidate}
+            onUpdateStage={handleUpdateStage}
           />
         ))}
       </div>

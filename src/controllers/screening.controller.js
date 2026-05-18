@@ -70,6 +70,9 @@ async function screenResumeHandler(req, res) {
     try {
         // 1️⃣ Validate required fields
         let { candidateName, candidateEmail, jobId, jobTitle, jobDescription } = req.body;
+        
+        let autoRejectionEnabled = false;
+        let autoRejectionThreshold = 0;
 
         // If jobId is provided, fetch job details from DB
         if (jobId) {
@@ -79,6 +82,8 @@ async function screenResumeHandler(req, res) {
             }
             jobTitle = job.title;
             jobDescription = job.description;
+            autoRejectionEnabled = job.autoRejectionEnabled || false;
+            autoRejectionThreshold = job.autoRejectionThreshold || 0;
         }
 
         if (!candidateName || !candidateEmail || !jobTitle || !jobDescription) {
@@ -125,7 +130,7 @@ async function screenResumeHandler(req, res) {
 
         // 4️⃣ Process in the background (fully decoupled from request lifecycle)
         setTimeout(() => {
-            processResumeBackground(newResume._id, fileExt, req.file.path, candidateName, candidateEmail, jobTitle, jobDescription, jobId);
+            processResumeBackground(newResume._id, fileExt, req.file.path, candidateName, candidateEmail, jobTitle, jobDescription, jobId, autoRejectionEnabled, autoRejectionThreshold);
         }, 50);
 
     } catch (error) {
@@ -183,21 +188,22 @@ async function bulkScreenResumeHandler(req, res) {
 
         let targetJobTitle = jobTitle;
         let targetJobDesc = jobDescription;
+        let autoRejectionEnabled = false;
+        let autoRejectionThreshold = 0;
 
         if (jobId) {
             const job = await Job.findById(jobId);
             if (!job) return res.status(404).json({ success: false, error: 'Job not found' });
             targetJobTitle = job.title;
             targetJobDesc = job.description;
+            autoRejectionEnabled = job.autoRejectionEnabled || false;
+            autoRejectionThreshold = job.autoRejectionThreshold || 0;
         }
 
         // 2️⃣ Create records for each file as PENDING
-        const tasks = [];
-        const resumeIds = [];
-
-        for (const file of req.files) {
+        const resumeDocs = req.files.map(file => {
             const fileExt = path.extname(file.originalname).toLowerCase().replace('.', '');
-            const resume = await Resume.create({
+            return {
                 candidateName: file.originalname.split('.')[0], 
                 candidateEmail: 'bulk-upload@pending.ai',      
                 jobId: jobId || null,
@@ -208,23 +214,26 @@ async function bulkScreenResumeHandler(req, res) {
                 fileType: fileExt,
                 status: 'pending',
                 pipelineStage: 'applied' // Put them in the applied column immediately
-            });
-            
-            resumeIds.push(resume._id);
-            tasks.push({
-                id: resume._id,
-                fileExt,
-                path: file.path,
-                name: resume.candidateName,
-                email: resume.candidateEmail
-            });
-        }
+            };
+        });
+
+        const insertedResumes = await Resume.insertMany(resumeDocs);
+
+        const tasks = insertedResumes.map((resume, index) => ({
+            id: resume._id,
+            fileExt: resumeDocs[index].fileType,
+            path: resumeDocs[index].filePath,
+            name: resume.candidateName,
+            email: resume.candidateEmail
+        }));
+
+        const resumeIds = insertedResumes.map(r => r._id);
 
         console.log(`✅ ${resumeIds.length} records created. Queueing sequential processing...`);
 
-        // 3️⃣ Parallel Background Processor (2 at a time)
-        // Process resumes in batches of 2 to maximize throughput without hitting rate limits
-        const BATCH_SIZE = 2;
+        // 3️⃣ Parallel Background Processor (10 at a time)
+        // Process all resumes simultaneously to maximize throughput and eliminate queue wait times
+        const BATCH_SIZE = 10;
         const runParallelBatches = async () => {
             const totalStart = Date.now();
             for (let i = 0; i < tasks.length; i += BATCH_SIZE) {
@@ -242,7 +251,9 @@ async function bulkScreenResumeHandler(req, res) {
                             task.email, 
                             targetJobTitle, 
                             targetJobDesc, 
-                            jobId
+                            jobId,
+                            autoRejectionEnabled,
+                            autoRejectionThreshold
                         ).catch(err => {
                             console.error(`❌ Processing failed for ${task.id}:`, err.message);
                         })
@@ -275,7 +286,7 @@ async function bulkScreenResumeHandler(req, res) {
 }
 
 // ─── Background Processor ──────────────────────────────────────────────────────
-async function processResumeBackground(resumeId, fileExt, filePath, candidateName, candidateEmail, jobTitle, jobDescription, jobId) {
+async function processResumeBackground(resumeId, fileExt, filePath, candidateName, candidateEmail, jobTitle, jobDescription, jobId, autoRejectionEnabled = false, autoRejectionThreshold = 0) {
     const startTime = Date.now();
     try {
         await Resume.findByIdAndUpdate(resumeId, { status: 'processing' });
@@ -322,13 +333,10 @@ async function processResumeBackground(resumeId, fileExt, filePath, candidateNam
         };
 
         // ─── Auto-Rejection Logic ───
-        if (jobId) {
-            const job = await Job.findById(jobId);
-            if (job && job.autoRejectionEnabled && aiResult.matchScore < job.autoRejectionThreshold) {
-                updateData.pipelineStage = 'rejected';
-                updateData.aiNote = `[AUTO-REJECTED] Score ${aiResult.matchScore} is below threshold (${job.autoRejectionThreshold}). ${aiResult.aiNote || ''}`;
-                console.log(`🚫 Background: Auto-rejected ${candidateName} (Score: ${aiResult.matchScore})`);
-            }
+        if (jobId && autoRejectionEnabled && aiResult.matchScore < autoRejectionThreshold) {
+            updateData.pipelineStage = 'rejected';
+            updateData.aiNote = `[AUTO-REJECTED] Score ${aiResult.matchScore} is below threshold (${autoRejectionThreshold}). ${aiResult.aiNote || ''}`;
+            console.log(`🚫 Background: Auto-rejected ${candidateName} (Score: ${aiResult.matchScore})`);
         }
 
         // Single atomic DB write with all results
@@ -493,6 +501,16 @@ async function retryResume(req, res) {
         });
 
         // Re-trigger background processing
+        let autoRejectionEnabled = false;
+        let autoRejectionThreshold = 0;
+        if (resume.jobId) {
+            const job = await Job.findById(resume.jobId);
+            if (job) {
+                autoRejectionEnabled = job.autoRejectionEnabled || false;
+                autoRejectionThreshold = job.autoRejectionThreshold || 0;
+            }
+        }
+
         const fileExt = resume.fileType || path.extname(resume.fileName).toLowerCase().replace('.', '');
         setTimeout(() => {
             processResumeBackground(
@@ -503,7 +521,9 @@ async function retryResume(req, res) {
                 resume.candidateEmail,
                 resume.jobTitle,
                 resume.jobDescription,
-                resume.jobId
+                resume.jobId,
+                autoRejectionEnabled,
+                autoRejectionThreshold
             );
         }, 100);
 
