@@ -75,7 +75,7 @@ export const bulkUploadResumes = (formData) => API.post('/bulk-screen-resume', f
     timeout: 60000 // 60 seconds timeout
 });
 
-export const fetchPublicJobs = () => API.get('/public/jobs');
+export const fetchPublicJobs = (recruiterId) => API.get(recruiterId ? `/public/jobs?recruiterId=${recruiterId}` : '/public/jobs');
 export const fetchPublicJobById = (id) => API.get(`/public/jobs/${id}`);
 export const applyPublic = (formData) => API.post('/public/apply', formData);
 

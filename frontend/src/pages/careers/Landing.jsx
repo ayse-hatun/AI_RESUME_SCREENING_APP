@@ -1,19 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { fetchPublicJobs } from '../../api';
-import { Briefcase, MapPin, Building2, ChevronRight, Loader2 } from 'lucide-react';
+import { Briefcase, MapPin, Building2, ChevronRight, Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
 
 const CareersLanding = () => {
+  const { recruiterId } = useParams();
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
+  const [recruiter, setRecruiter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // If no recruiterId in URL, redirect logged in user to their specific career portal
+    if (!recruiterId) {
+      try {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const parsed = JSON.parse(storedUser);
+          const userId = parsed._id || parsed.id;
+          if (userId) {
+            navigate(`/careers/${userId}`, { replace: true });
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to parse logged in user for career redirect', e);
+      }
+    }
+  }, [recruiterId, navigate]);
+
+  useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await fetchPublicJobs();
+        const response = await fetchPublicJobs(recruiterId);
         if (response.data.success) {
           setJobs(response.data.data);
+          if (response.data.recruiter) {
+            setRecruiter(response.data.recruiter);
+          }
         }
       } catch (err) {
         setError('Unable to load job openings. Please try again later.');
@@ -24,7 +49,7 @@ const CareersLanding = () => {
     };
 
     fetchJobs();
-  }, []);
+  }, [recruiterId]);
 
   return (
     <div className="min-h-screen bg-background bg-indigo-glow bg-no-repeat bg-top py-20 px-6">
@@ -33,13 +58,13 @@ const CareersLanding = () => {
         <div className="text-center mb-16 animate-fade-in">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-primary/10 border border-accent-primary/20 text-accent-primary text-sm font-medium mb-6">
             <Building2 size={16} />
-            <span>Join Our Team</span>
+            <span>Join {recruiter?.company || 'Our Team'}</span>
           </div>
           <h1 className="text-5xl font-bold text-text-primary mb-6 tracking-tight">
-            Build the Future <span className="text-gradient">With Us</span>
+            Build the Future <span className="text-gradient">With {recruiter?.company || 'Us'}</span>
           </h1>
           <p className="text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed">
-            We're looking for passionate individuals to help us redefine what's possible. 
+            We're looking for passionate individuals to help us redefine what's possible at {recruiter?.company || 'our company'}. 
             Explore our open positions and find your next challenge.
           </p>
         </div>
@@ -56,10 +81,61 @@ const CareersLanding = () => {
               <p className="text-red-400 font-medium">{error}</p>
             </div>
           ) : jobs.length === 0 ? (
-            <div className="glass-card p-12 text-center border-dashed border-border">
-              <p className="text-text-secondary text-lg">
-                No active job openings at the moment. Please check back later!
+            // 🌟 AESTHETIC HIGH-CONVERSION COMPANY BRANDING & GENERAL APPLICATION STATE 🌟
+            <div className="glass-card p-12 text-center border-accent-primary/20 max-w-3xl mx-auto relative overflow-hidden bg-gradient-to-br from-indigo-950/20 via-purple-950/10 to-indigo-950/20 backdrop-blur-xl animate-fade-in">
+              {/* Decorative glows */}
+              <div className="absolute -top-24 -left-24 w-48 h-48 rounded-full bg-accent-primary/15 blur-3xl" />
+              <div className="absolute -bottom-24 -right-24 w-48 h-48 rounded-full bg-purple-500/15 blur-3xl" />
+              
+              <div className="inline-flex p-4 rounded-2xl bg-accent-primary/10 border border-accent-primary/20 text-accent-primary mb-6">
+                <Sparkles size={36} className="animate-pulse" />
+              </div>
+              
+              <h2 className="text-3xl font-extrabold text-text-primary mb-4 tracking-tight">
+                Apply Easily, <span className="text-gradient">Hire Fast</span>
+              </h2>
+              
+              <p className="text-lg text-text-secondary mb-10 leading-relaxed max-w-xl mx-auto">
+                At {recruiter?.company || 'our organization'}, we respect your time and value your talent. We've eliminated long forms and endless queues to deliver a modern, zero-friction candidate experience.
               </p>
+
+              {/* Recruitment steps flow */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left mb-12">
+                <div className="p-6 rounded-2xl bg-white/5 border border-border/40 hover:border-accent-primary/30 transition-all duration-300 group hover:translate-y-[-2px]">
+                  <div className="w-10 h-10 rounded-xl bg-accent-primary/10 flex items-center justify-center text-accent-primary font-bold mb-4 group-hover:scale-110 transition-transform">
+                    1
+                  </div>
+                  <h4 className="text-text-primary font-bold mb-2">Upload Resume</h4>
+                  <p className="text-xs text-text-secondary leading-relaxed">
+                    No painful forms. Drop your PDF or DOCX file, and our system automatically extracts your profile.
+                  </p>
+                </div>
+
+                <div className="p-6 rounded-2xl bg-white/5 border border-border/40 hover:border-accent-primary/30 transition-all duration-300 group hover:translate-y-[-2px]">
+                  <div className="w-10 h-10 rounded-xl bg-accent-primary/10 flex items-center justify-center text-accent-primary font-bold mb-4 group-hover:scale-110 transition-transform">
+                    2
+                  </div>
+                  <h4 className="text-text-primary font-bold mb-2">Instant Review</h4>
+                  <p className="text-xs text-text-secondary leading-relaxed">
+                    Our system instantly reviews your skills and experience against our requirements.
+                  </p>
+                </div>
+
+                <div className="p-6 rounded-2xl bg-white/5 border border-border/40 hover:border-accent-primary/30 transition-all duration-300 group hover:translate-y-[-2px]">
+                  <div className="w-10 h-10 rounded-xl bg-accent-primary/10 flex items-center justify-center text-accent-primary font-bold mb-4 group-hover:scale-110 transition-transform">
+                    3
+                  </div>
+                  <h4 className="text-text-primary font-bold mb-2">Direct Contact</h4>
+                  <p className="text-xs text-text-secondary leading-relaxed">
+                    Recruiters see your application instantly, ensuring prompt review and fast scheduling.
+                  </p>
+                </div>
+              </div>
+
+              <div className="inline-flex items-center gap-2 text-xs font-semibold text-text-tertiary tracking-wider bg-white/5 px-4 py-2 rounded-full border border-border/50">
+                <CheckCircle2 size={14} className="text-accent-primary" />
+                No active openings at the moment. Keep an eye out!
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -103,7 +179,7 @@ const CareersLanding = () => {
 
         {/* Footer Info */}
         <div className="mt-20 text-center text-text-tertiary text-sm">
-          <p>© {new Date().getFullYear()} SmartHire AI. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {recruiter?.company || 'SmartHire AI'}. All rights reserved.</p>
         </div>
       </div>
     </div>

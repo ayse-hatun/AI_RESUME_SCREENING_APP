@@ -225,7 +225,8 @@ const JobDetails = () => {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
 
-  const loadData = async () => {
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [jobRes, resumesRes] = await Promise.all([
         fetchJobById(id),
@@ -240,7 +241,7 @@ const JobDetails = () => {
     } catch (err) {
       console.error('Error fetching job details');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -283,7 +284,7 @@ const JobDetails = () => {
     if (window.confirm(`Are you sure you want to delete ${name}? This will remove all AI analysis and files permanently.`)) {
       try {
         await deleteResume(resumeId);
-        loadData(); // Refresh list
+        loadData(true); // Refresh list silently
       } catch (err) {
         console.error('Delete failed:', err);
         alert('Failed to delete candidate.');
@@ -294,7 +295,7 @@ const JobDetails = () => {
   const handleRetryResume = async (resumeId, name) => {
     try {
       await retryResume(resumeId);
-      loadData(); // Refresh to show the pending status
+      loadData(true); // Refresh to show the pending status silently
     } catch (err) {
       console.error('Retry failed:', err);
       alert(`Failed to retry ${name}. Please try again.`);
@@ -304,7 +305,7 @@ const JobDetails = () => {
   const handleUpdateStage = async (resumeId, stage) => {
     try {
       await updateResumeStage(resumeId, { stage, sendEmail: true });
-      loadData();
+      loadData(true);
     } catch (err) {
       console.error('Failed to update stage:', err);
       alert('Failed to update candidate stage.');
@@ -312,17 +313,15 @@ const JobDetails = () => {
   };
 
   useEffect(() => {
-    loadData();
-    // Poll for updates every 4 seconds if there are pending/processing resumes
+    loadData(false);
+    
+    // Poll for updates every 5 seconds to instantly catch new applications and progress status
     const pollInterval = setInterval(() => {
-      const hasPending = resumes.some(r => r.status === 'pending' || r.status === 'processing');
-      if (hasPending) {
-        loadData();
-      }
-    }, 4000);
+      loadData(true);
+    }, 5000);
 
     return () => clearInterval(pollInterval);
-  }, [id, resumes.length]);
+  }, [id]);
 
   if (loading) return <div className="p-10 text-text-primary">Loading pipeline...</div>;
 

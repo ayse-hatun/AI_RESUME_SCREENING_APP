@@ -10,9 +10,9 @@ const Settings = require('../models/settings.model');
 exports.getSettings = async (req, res) => {
     try {
         // Find or create default settings for the user
-        let settings = await Settings.findOne({ userId: req.user.id });
+        let settings = await Settings.findOne({ userId: req.user._id });
         if (!settings) {
-            settings = await Settings.create({ userId: req.user.id });
+            settings = await Settings.create({ userId: req.user._id });
         }
         res.status(200).json({ success: true, data: settings });
     } catch (error) {
@@ -46,7 +46,7 @@ exports.updateSettings = async (req, res) => {
         });
 
         const settings = await Settings.findOneAndUpdate(
-            { userId: req.user.id },
+            { userId: req.user._id },
             sanitizedUpdate,
             { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
         );
@@ -66,8 +66,8 @@ exports.resetSettings = async (req, res) => {
         // Atomic reset using findOneAndReplace with upsert
         // This ensures the user is never without a settings document
         const newSettings = await Settings.findOneAndReplace(
-            { userId: req.user.id },
-            { userId: req.user.id },
+            { userId: req.user._id },
+            { userId: req.user._id },
             { upsert: true, new: true, runValidators: true }
         );
         res.status(200).json({ success: true, data: newSettings });

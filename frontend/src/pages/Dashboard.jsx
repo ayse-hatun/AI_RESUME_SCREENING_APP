@@ -66,8 +66,8 @@ const Dashboard = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const navigate = useNavigate();
 
-  const loadJobs = async () => {
-    setLoading(true);
+  const loadJobs = async (silent = false) => {
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const [jobsRes, resumesRes] = await Promise.all([fetchJobs(), fetchResumes()]);
@@ -75,9 +75,9 @@ const Dashboard = () => {
       setResumes(resumesRes.data.data || []);
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
-      setError('Failed to load dashboard data. Please check your connection.');
+      if (!silent) setError('Failed to load dashboard data. Please check your connection.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -110,7 +110,14 @@ const Dashboard = () => {
     : 0;
 
   useEffect(() => {
-    loadJobs();
+    loadJobs(false);
+    
+    // Poll for updates every 5 seconds to instantly catch new applicants
+    const interval = setInterval(() => {
+      loadJobs(true);
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (

@@ -56,17 +56,17 @@ const resumeSchema = new mongoose.Schema({
 
     // AI Screening Result (from Gemini)
     screeningResult: {
-        matchScore:        { type: Number, min: 0, max: 100 },
-        verdict:           { type: String },
-        summary:           { type: String },
-        strengths:         [{ type: String }],
-        weaknesses:        [{ type: String }],
+        matchScore: { type: Number, min: 0, max: 100 },
+        verdict: { type: String },
+        summary: { type: String },
+        strengths: [{ type: String }],
+        weaknesses: [{ type: String }],
         skills: {
-            matched:       [{ type: String }],
-            missing:       [{ type: String }]
+            matched: [{ type: String }],
+            missing: [{ type: String }]
         },
-        experienceMatch:   { type: String },
-        recommendation:    { type: String }
+        experienceMatch: { type: String },
+        recommendation: { type: String }
     },
 
     // Email Delivery Status
@@ -133,6 +133,16 @@ const resumeSchema = new mongoose.Schema({
     // AI Annotation / Note
     aiNote: {
         type: String,
+        default: null
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        index: true
+    },
+    cacheHash: {
+        type: String,
+        index: true,
         default: null
     }
 

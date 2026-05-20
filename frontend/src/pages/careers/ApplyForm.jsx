@@ -94,7 +94,7 @@ const CareersApply = () => {
           appliedJobs.push(jobId);
           localStorage.setItem('appliedJobs', JSON.stringify(appliedJobs));
         }
-        navigate('/careers/success', { state: { name: formData.fullName } });
+        navigate('/careers/success', { state: { name: formData.fullName, recruiterId: job?.createdBy } });
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to submit application. Please try again.');
@@ -117,7 +117,7 @@ const CareersApply = () => {
         <p className="text-text-secondary mb-8">
           You have already successfully applied for this position. We are reviewing your application and will be in touch!
         </p>
-        <Link to="/careers" className="btn-primary inline-flex items-center gap-2">
+        <Link to={job?.createdBy ? `/careers/${job.createdBy}` : "/careers"} className="btn-primary inline-flex items-center gap-2">
           <ArrowLeft size={18} /> Back to Job Board
         </Link>
       </div>

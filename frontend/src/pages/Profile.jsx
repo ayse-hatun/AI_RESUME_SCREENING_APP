@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Building, Phone, MapPin, Save, Loader2, Camera, ShieldCheck } from 'lucide-react';
+import { User, Mail, Building, Phone, MapPin, Save, Loader2, Camera, ShieldCheck, Sparkles, ArrowUpRight } from 'lucide-react';
 import { fetchMe, updateProfile } from '../api';
 
 const Profile = () => {
@@ -124,6 +124,43 @@ const Profile = () => {
                             <button className="w-full text-left px-3 py-2 rounded-lg hover:bg-accent-primary/10 text-text-secondary hover:text-accent-primary transition-all text-sm font-medium">Change Password</button>
                             <button className="w-full text-left px-3 py-2 rounded-lg hover:bg-accent-primary/10 text-text-secondary hover:text-accent-primary transition-all text-sm font-medium">Notification Settings</button>
                             <button className="w-full text-left px-3 py-2 rounded-lg hover:bg-accent-danger/10 text-text-secondary hover:text-accent-danger transition-all text-sm font-medium">Sign Out</button>
+                        </div>
+                    </div>
+
+                    <div className="glass-card p-6 bg-gradient-to-br from-indigo-900/10 to-purple-900/10 border-accent-primary/20 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-3 text-accent-primary/30">
+                            <Sparkles size={24} />
+                        </div>
+                        <h3 className="font-bold text-text-primary mb-2">Your Career Portal</h3>
+                        <p className="text-xs text-text-secondary mb-4 leading-relaxed">
+                            Share this link with candidates to let them view and apply to your active job openings instantly.
+                        </p>
+                        
+                        <div className="space-y-3">
+                            <div className="p-3 bg-black/20 rounded-xl border border-border text-xs text-text-secondary font-mono truncate select-all">
+                                {`${window.location.origin}/careers/${user?._id}`}
+                            </div>
+                            
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(`${window.location.origin}/careers/${user?._id}`);
+                                        alert('Careers link copied to clipboard!');
+                                    }}
+                                    className="btn-primary w-full py-2.5 text-xs font-bold"
+                                >
+                                    Copy Link
+                                </button>
+                                <a
+                                    href={`/careers/${user?._id}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="p-2.5 rounded-xl border border-border hover:border-accent-primary transition-colors text-text-secondary hover:text-accent-primary bg-white/5 flex items-center justify-center"
+                                    title="Open careers portal"
+                                >
+                                    <ArrowUpRight size={18} />
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

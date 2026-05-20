@@ -5,6 +5,8 @@ const CareersSuccess = () => {
   const location = useLocation();
   const name = location.state?.name || 'Candidate';
 
+  const recruiterId = location.state?.recruiterId;
+
   if (!location.state) {
     return <Navigate to="/careers" replace />;
   }
@@ -65,7 +67,7 @@ const CareersSuccess = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link to="/careers" className="btn-secondary w-full sm:w-auto px-8 py-4 flex items-center justify-center gap-2">
+          <Link to={recruiterId ? `/careers/${recruiterId}` : "/careers"} className="btn-secondary w-full sm:w-auto px-8 py-4 flex items-center justify-center gap-2">
             Return to Careers
           </Link>
           <a 

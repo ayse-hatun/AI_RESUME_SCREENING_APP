@@ -46,21 +46,36 @@ const Jobs = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+  const [user] = useState(() => {
+    try {
+      const storedUser = localStorage.getItem('user');
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch (e) {
+      return null;
+    }
+  });
 
-  const loadJobs = async () => {
-    setLoading(true);
+  const loadJobs = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const { data } = await fetchJobs();
       setJobs(data.data || []);
     } catch (err) {
       console.error('Failed to load jobs');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadJobs();
+    loadJobs(false);
+    
+    // Poll for updates every 5 seconds to instantly catch new applications
+    const interval = setInterval(() => {
+      loadJobs(true);
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const lowerSearch = searchTerm.toLowerCase();
@@ -100,11 +115,14 @@ const Jobs = () => {
           <div className="glass-card flex items-center gap-3 px-4 py-2 border-accent-secondary/30 bg-accent-secondary/5">
             <div className="text-left">
               <p className="text-[10px] text-accent-secondary font-black uppercase tracking-widest leading-none mb-1">Public Careers Page</p>
-              <p className="text-xs text-text-tertiary font-mono">{window.location.origin}/careers</p>
+              <p className="text-xs text-text-tertiary font-mono">
+                {user?._id || user?.id ? `${window.location.origin}/careers/${user._id || user.id}` : `${window.location.origin}/careers`}
+              </p>
             </div>
             <button 
               onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}/careers`);
+                const careersUrl = user?._id || user?.id ? `${window.location.origin}/careers/${user._id || user.id}` : `${window.location.origin}/careers`;
+                navigator.clipboard.writeText(careersUrl);
                 alert('Careers page link copied!');
               }}
               className="p-2 hover:bg-accent-secondary/10 rounded-lg text-accent-secondary transition-colors"

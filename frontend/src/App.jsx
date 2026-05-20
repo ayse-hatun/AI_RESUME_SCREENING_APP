@@ -90,6 +90,7 @@ function App() {
         
         {/* Candidate / Careers Routes */}
         <Route path="/careers" element={<CareersLanding />} />
+        <Route path="/careers/:recruiterId" element={<CareersLanding />} />
         <Route path="/careers/jobs/:jobId" element={<CareersJobDetail />} />
         <Route path="/careers/jobs/:jobId/apply" element={<CareersApply />} />
         <Route path="/careers/success" element={<CareersSuccess />} />

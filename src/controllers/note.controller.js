@@ -1,5 +1,6 @@
 const Note = require('../models/note.model');
 const Resume = require('../models/resume.model');
+const Job = require('../models/job.model');
 
 /**
  * @desc    Add a note to a candidate
@@ -28,11 +29,23 @@ exports.addNote = async (req, res) => {
             return res.status(404).json({ success: false, error: 'Resume not found' });
         }
 
+        // Ownership validation
+        let isAuthorized = req.user?.role === 'admin' || (resume.createdBy && resume.createdBy.toString() === req.user?._id?.toString());
+        if (!isAuthorized && resume.jobId) {
+            const job = await Job.findById(resume.jobId);
+            if (job && job.createdBy.toString() === req.user?._id?.toString()) {
+                isAuthorized = true;
+            }
+        }
+        if (!isAuthorized) {
+            return res.status(403).json({ success: false, error: 'Not authorized to add notes to this candidate' });
+        }
+
         const note = await Note.create({
             resumeId,
             content,
             type,
-            authorId: req.user?.id
+            authorId: req.user?._id
         });
 
         res.status(201).json({ success: true, data: note });
@@ -49,6 +62,24 @@ exports.addNote = async (req, res) => {
 exports.getNotes = async (req, res) => {
     try {
         const { resumeId } = req.params;
+        
+        // Ownership validation
+        const resume = await Resume.findById(resumeId);
+        if (!resume) {
+            return res.status(404).json({ success: false, error: 'Resume not found' });
+        }
+
+        let isAuthorized = req.user?.role === 'admin' || (resume.createdBy && resume.createdBy.toString() === req.user?._id?.toString());
+        if (!isAuthorized && resume.jobId) {
+            const job = await Job.findById(resume.jobId);
+            if (job && job.createdBy.toString() === req.user?._id?.toString()) {
+                isAuthorized = true;
+            }
+        }
+        if (!isAuthorized) {
+            return res.status(403).json({ success: false, error: 'Not authorized to view notes for this candidate' });
+        }
+
         const notes = await Note.find({ resumeId }).sort({ createdAt: -1 });
         
         res.status(200).json({ success: true, count: notes.length, data: notes });
@@ -74,7 +105,7 @@ exports.deleteNote = async (req, res) => {
         }
 
         // Authorization: Only the author or an admin can delete the note
-        const isAuthor = note.authorId && note.authorId.toString() === req.user.id;
+        const isAuthor = note.authorId && note.authorId.toString() === req.user._id.toString();
         const isAdmin = req.user.role === 'admin';
 
         if (!isAuthor && !isAdmin) {

@@ -66,7 +66,7 @@ const CareersJobDetail = () => {
       <div className="max-w-4xl mx-auto">
         {/* Navigation */}
         <Link 
-          to="/careers" 
+          to={job?.createdBy ? `/careers/${job.createdBy}` : "/careers"} 
           className="inline-flex items-center gap-2 text-text-secondary hover:text-accent-primary transition-colors mb-12 group"
         >
           <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />

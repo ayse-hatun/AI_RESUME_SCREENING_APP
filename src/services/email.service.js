@@ -122,22 +122,24 @@ async function verifyEmailConnection() {
 /**
  * Sends a status update email (e.g., shortlisted, rejected)
  */
-async function sendStatusUpdateEmail(toEmail, candidateName, jobTitle, stage) {
+async function sendStatusUpdateEmail(toEmail, candidateName, jobTitle, stage, shortReason = '') {
     let subject = '';
     let message = '';
     let headerColor = '';
 
     if (stage === 'shortlisted') {
         subject = `Congratulations! You've been Shortlisted for ${escapeHtml(jobTitle)}`;
-        headerColor = '#22c55e'; // Green
+        headerColor = '#08544A'; // Brand Green
         message = `<p>Dear ${escapeHtml(candidateName)},</p>
                    <p>We have great news! Your application for the <strong>${escapeHtml(jobTitle)}</strong> position has been reviewed, and we are pleased to inform you that you have been shortlisted for the next round.</p>
+                   ${shortReason ? `<p><strong>Decision Details:</strong> ${escapeHtml(shortReason)}</p>` : ''}
                    <p>Our recruitment team will contact you shortly with the next steps.</p>`;
     } else if (stage === 'rejected') {
         subject = `Update on your application for ${escapeHtml(jobTitle)}`;
         headerColor = '#ef4444'; // Red
         message = `<p>Dear ${escapeHtml(candidateName)},</p>
                    <p>Thank you for applying for the <strong>${escapeHtml(jobTitle)}</strong> position. After careful consideration, we regret to inform you that we will not be moving forward with your application at this time.</p>
+                   ${shortReason ? `<p><strong>Decision Details:</strong> ${escapeHtml(shortReason)}</p>` : ''}
                    <p>We appreciate your interest and wish you the best in your job search.</p>`;
     } else if (stage === 'applied') {
         subject = `Application Received: ${escapeHtml(jobTitle)}`;

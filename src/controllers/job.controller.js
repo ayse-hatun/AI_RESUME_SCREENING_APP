@@ -50,7 +50,8 @@ exports.createJob = async (req, res) => {
  */
 exports.getAllJobs = async (req, res) => {
     try {
-        const jobs = await Job.find().sort({ createdAt: -1 });
+        // Only return jobs created by the current recruiter
+        const jobs = await Job.find({ createdBy: req.user._id }).sort({ createdAt: -1 });
         res.status(200).json({
             success: true,
             count: jobs.length,
@@ -76,6 +77,14 @@ exports.getJobById = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 error: 'Job not found'
+            });
+        }
+
+        // Ownership validation: must be admin or the creator of the job
+        if (job.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                error: 'Not authorized to access this job'
             });
         }
         res.status(200).json({
@@ -196,9 +205,25 @@ exports.deleteJob = async (req, res) => {
  */
 exports.getDashboardStats = async (req, res) => {
     try {
-        const activeJobsCount = await Job.countDocuments({ status: 'active' });
-        const totalCandidates = await Resume.countDocuments();
-        const pendingScreening = await Resume.countDocuments({ status: { $in: ['pending', 'processing'] } });
+        // Fetch only jobs created by this user
+        const userJobs = await Job.find({ createdBy: req.user._id }).select('_id');
+        const jobIds = userJobs.map(j => j._id);
+
+        const activeJobsCount = await Job.countDocuments({ createdBy: req.user._id, status: 'active' });
+        
+        // Filter candidate/resume results to only those associated with the user's jobs or created by the user
+        const resumeFilter = {
+            $or: [
+                { jobId: { $in: jobIds } },
+                { createdBy: req.user._id }
+            ]
+        };
+
+        const totalCandidates = await Resume.countDocuments(resumeFilter);
+        const pendingScreening = await Resume.countDocuments({ 
+            ...resumeFilter, 
+            status: { $in: ['pending', 'processing'] } 
+        });
         
         // Hired this month
         const startOfMonth = new Date();
@@ -206,6 +231,7 @@ exports.getDashboardStats = async (req, res) => {
         startOfMonth.setHours(0, 0, 0, 0);
         
         const hiredThisMonth = await Resume.countDocuments({
+            ...resumeFilter,
             pipelineStage: 'hired',
             pipelineStageChangedAt: { $gte: startOfMonth }
         });
@@ -231,6 +257,16 @@ exports.getDashboardStats = async (req, res) => {
 exports.getJobStats = async (req, res) => {
     try {
         const jobId = req.params.id;
+        
+        // Fetch job and check authorization
+        const job = await Job.findById(jobId);
+        if (!job) {
+            return res.status(404).json({ success: false, error: 'Job not found' });
+        }
+        if (job.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, error: 'Not authorized to access statistics for this job' });
+        }
+
         const applicantCount = await Resume.countDocuments({ jobId });
         const screenedCount = await Resume.countDocuments({ jobId, status: 'completed' });
         
@@ -266,8 +302,19 @@ exports.getJobStats = async (req, res) => {
  */
 exports.getResumesByJob = async (req, res) => {
     try {
+        const jobId = req.params.id;
+        
+        // Fetch job and check authorization
+        const job = await Job.findById(jobId);
+        if (!job) {
+            return res.status(404).json({ success: false, error: 'Job not found' });
+        }
+        if (job.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, error: 'Not authorized to access resumes for this job' });
+        }
+
         const { stage } = req.query; // optional filter by pipeline stage
-        const filter = { jobId: req.params.id };
+        const filter = { jobId };
         if (stage) {
             filter.pipelineStage = stage;
         }

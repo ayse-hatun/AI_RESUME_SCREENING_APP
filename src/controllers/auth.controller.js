@@ -105,13 +105,14 @@ exports.register = async (req, res) => {
         const originUrl = origins.find(o => o.includes('5173')) || origins[0];
         const verifyUrl = `${originUrl}/verify-email?email=${encodeURIComponent(user.email)}&otp=${otpCode}`;
 
-        // Send OTP Email in the background so it doesn't block the HTTP response
+        // Send OTP email in the background (non-critical: user is auto-verified above).
+        // Failure here does NOT block registration but is logged for observability.
         sendVerificationEmail(user.email, user.name, otpCode, verifyUrl)
-            .catch(err => console.error('❌ Failed to send verification email in background:', err.message));
+            .catch(err => console.error('❌ Background email delivery failed (user still registered):', err.message));
 
         res.status(201).json({
             success: true,
-            message: 'Registration successful. Please check your email for the verification code.',
+            message: 'Registration successful. A verification email will be sent shortly.',
             data: { email: user.email }
         });
     } catch (error) {

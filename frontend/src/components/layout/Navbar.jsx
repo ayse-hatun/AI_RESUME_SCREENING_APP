@@ -119,7 +119,7 @@ const Navbar = ({ isOpen = true, onMouseEnter, onMouseLeave }) => {
         
         <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest px-4 mt-10 mb-2">Public Info</p>
         <a 
-          href="/careers" 
+          href={user?._id || user?.id ? `/careers/${user._id || user.id}` : "/careers"} 
           target="_blank" 
           rel="noopener noreferrer"
           className="relative overflow-hidden flex items-center gap-3 px-5 py-3 rounded-xl transition-all duration-300 group text-white/70 hover:bg-white/5 hover:text-white"

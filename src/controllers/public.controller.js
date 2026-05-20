@@ -1,7 +1,9 @@
 const Job = require('../models/job.model');
 const Resume = require('../models/resume.model');
+const User = require('../models/user.model');
 const path = require('path');
 const { processResumeBackground } = require('./screening.controller');
+const { moveFileToUserFolder } = require('../utils/file');
 
 /**
  * @desc    Get all active jobs for candidates
@@ -10,14 +12,35 @@ const { processResumeBackground } = require('./screening.controller');
  */
 exports.getActiveJobs = async (req, res) => {
     try {
-        const jobs = await Job.find({ status: 'active' })
+        const { recruiterId } = req.query;
+        let filter = { status: 'active' };
+        let recruiterInfo = null;
+
+        if (recruiterId) {
+            // Validate if valid ObjectId
+            const mongoose = require('mongoose');
+            if (mongoose.Types.ObjectId.isValid(recruiterId)) {
+                filter.createdBy = recruiterId;
+                const recruiter = await User.findById(recruiterId).select('name company organization title');
+                if (recruiter) {
+                    recruiterInfo = {
+                        name: recruiter.name,
+                        company: recruiter.company || recruiter.organization || 'Our Company',
+                        title: recruiter.title
+                    };
+                }
+            }
+        }
+
+        const jobs = await Job.find(filter)
             .select('title department location description requiredSkills experienceYears educationLevel createdAt')
             .sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,
             count: jobs.length,
-            data: jobs
+            data: jobs,
+            recruiter: recruiterInfo
         });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -87,6 +110,9 @@ exports.submitApplication = async (req, res) => {
             });
         }
 
+        // Move file to user isolated folder
+        const secureFilePath = moveFileToUserFolder(req.file.path, job.createdBy);
+
         // 3. Create new Resume/Application record
         // We set status to 'pending' to trigger the existing AI pipeline
         const application = await Resume.create({
@@ -100,19 +126,20 @@ exports.submitApplication = async (req, res) => {
             jobTitle: job.title,
             jobDescription: job.description,
             fileName: req.file.originalname,
-            filePath: req.file.path,
+            filePath: secureFilePath,
             fileType: path.extname(req.file.originalname).substring(1).toLowerCase(),
             status: 'pending',
-            pipelineStage: 'applied'
+            pipelineStage: 'applied',
+            createdBy: job.createdBy
         });
-
+ 
         // 4. Trigger AI screening in the background (fully decoupled)
         const fileExt = path.extname(req.file.originalname).toLowerCase().replace('.', '');
         setTimeout(() => {
             processResumeBackground(
                 application._id, 
                 fileExt, 
-                req.file.path, 
+                secureFilePath, 
                 resolvedName, 
                 resolvedEmail, 
                 job.title, 

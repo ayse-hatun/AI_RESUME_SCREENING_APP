@@ -11,8 +11,9 @@ const fs = require('fs');
 const pdfParse = require('pdf-parse');
 const Resume = require('../models/resume.model');
 const Job = require('../models/job.model');
-const { screenResume } = require('../services/gemini.service');
+const { screenResume, cleanText } = require('../services/gemini.service');
 const { sendScreeningResultEmail, sendStatusUpdateEmail } = require('../services/email.service');
+const { moveFileToUserFolder } = require('../utils/file');
 
 const MAX_UPLOAD_FILES = 10;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -26,9 +27,9 @@ async function extractTextFromPDF(filePath) {
     try {
         // Use pdf-parse with options to be more forgiving
         const options = {
-            pagerender: function(pageData) {
+            pagerender: function (pageData) {
                 return pageData.getTextContent()
-                    .then(function(textContent) {
+                    .then(function (textContent) {
                         return textContent.items.map(item => item.str).join(' ');
                     });
             }
@@ -70,7 +71,7 @@ async function screenResumeHandler(req, res) {
     try {
         // 1️⃣ Validate required fields
         let { candidateName, candidateEmail, jobId, jobTitle, jobDescription } = req.body;
-        
+
         let autoRejectionEnabled = false;
         let autoRejectionThreshold = 0;
 
@@ -101,6 +102,9 @@ async function screenResumeHandler(req, res) {
         }
 
         const fileExt = path.extname(req.file.originalname).toLowerCase().replace('.', '');
+ 
+        // Move file to user isolated folder
+        const secureFilePath = moveFileToUserFolder(req.file.path, req.user._id);
 
         // 2️⃣ Create initial DB record (status: pending)
         const newResume = await Resume.create({
@@ -110,13 +114,14 @@ async function screenResumeHandler(req, res) {
             jobTitle,
             jobDescription,
             fileName: req.file.originalname,
-            filePath: req.file.path,
+            filePath: secureFilePath,
             fileType: fileExt,
-            status: 'pending' // changed from processing
+            status: 'pending', // changed from processing
+            createdBy: req.user._id
         });
-
+ 
         resumeId = newResume._id;
-
+ 
         // 3️⃣ Return 202 Accepted immediately so frontend doesn't block
         res.status(202).json({
             success: true,
@@ -127,10 +132,10 @@ async function screenResumeHandler(req, res) {
                 checkStatusUrl: `/api/resumes/${newResume._id}/status`
             }
         });
-
+ 
         // 4️⃣ Process in the background (fully decoupled from request lifecycle)
         setTimeout(() => {
-            processResumeBackground(newResume._id, fileExt, req.file.path, candidateName, candidateEmail, jobTitle, jobDescription, jobId, autoRejectionEnabled, autoRejectionThreshold);
+            processResumeBackground(newResume._id, fileExt, secureFilePath, candidateName, candidateEmail, jobTitle, jobDescription, jobId, autoRejectionEnabled, autoRejectionThreshold);
         }, 50);
 
     } catch (error) {
@@ -148,9 +153,9 @@ async function screenResumeHandler(req, res) {
 async function bulkScreenResumeHandler(req, res) {
     try {
         const { jobId, jobTitle, jobDescription } = req.body;
-        
+
         console.log(`📂 Bulk Upload Started: ${req.files?.length} files for Job ${jobId}`);
-        
+
         // 1️⃣ Validate
         if (!jobId && (!jobTitle || !jobDescription)) {
             console.log('❌ Bulk Upload Failed: Missing Job ID/Desc');
@@ -162,9 +167,9 @@ async function bulkScreenResumeHandler(req, res) {
         }
 
         if (req.files.length > MAX_UPLOAD_FILES) {
-            return res.status(400).json({ 
-                success: false, 
-                error: `Too many files. Max ${MAX_UPLOAD_FILES} files allowed per batch.` 
+            return res.status(400).json({
+                success: false,
+                error: `Too many files. Max ${MAX_UPLOAD_FILES} files allowed per batch.`
             });
         }
 
@@ -172,15 +177,15 @@ async function bulkScreenResumeHandler(req, res) {
         for (const file of req.files) {
             const fileExt = path.extname(file.originalname).toLowerCase().replace('.', '');
             if (!['pdf', 'docx', 'txt'].includes(fileExt)) {
-                return res.status(400).json({ 
-                    success: false, 
-                    error: `Unsupported file type: .${fileExt} in file ${file.originalname}. Only PDF, DOCX, and TXT are allowed.` 
+                return res.status(400).json({
+                    success: false,
+                    error: `Unsupported file type: .${fileExt} in file ${file.originalname}. Only PDF, DOCX, and TXT are allowed.`
                 });
             }
             if (file.size > MAX_FILE_SIZE) {
-                return res.status(400).json({ 
-                    success: false, 
-                    error: `File ${file.originalname} exceeds the 5MB size limit.` 
+                return res.status(400).json({
+                    success: false,
+                    error: `File ${file.originalname} exceeds the 5MB size limit.`
                 });
             }
         }
@@ -203,17 +208,19 @@ async function bulkScreenResumeHandler(req, res) {
         // 2️⃣ Create records for each file as PENDING
         const resumeDocs = req.files.map(file => {
             const fileExt = path.extname(file.originalname).toLowerCase().replace('.', '');
+            const secureFilePath = moveFileToUserFolder(file.path, req.user._id);
             return {
-                candidateName: file.originalname.split('.')[0], 
-                candidateEmail: 'bulk-upload@pending.ai',      
+                candidateName: file.originalname.split('.')[0],
+                candidateEmail: 'bulk-upload@pending.ai',
                 jobId: jobId || null,
                 jobTitle: targetJobTitle,
                 jobDescription: targetJobDesc,
                 fileName: file.originalname,
-                filePath: file.path,
+                filePath: secureFilePath,
                 fileType: fileExt,
                 status: 'pending',
-                pipelineStage: 'applied' // Put them in the applied column immediately
+                pipelineStage: 'applied', // Put them in the applied column immediately
+                createdBy: req.user._id
             };
         });
 
@@ -239,18 +246,18 @@ async function bulkScreenResumeHandler(req, res) {
             for (let i = 0; i < tasks.length; i += BATCH_SIZE) {
                 const batch = tasks.slice(i, i + BATCH_SIZE);
                 console.log(`🔄 Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(tasks.length / BATCH_SIZE)}: [${batch.map(t => t.name).join(', ')}]`);
-                
+
                 // Process batch in parallel
                 await Promise.allSettled(
-                    batch.map(task => 
+                    batch.map(task =>
                         processResumeBackground(
-                            task.id, 
-                            task.fileExt, 
-                            task.path, 
-                            task.name, 
-                            task.email, 
-                            targetJobTitle, 
-                            targetJobDesc, 
+                            task.id,
+                            task.fileExt,
+                            task.path,
+                            task.name,
+                            task.email,
+                            targetJobTitle,
+                            targetJobDesc,
                             jobId,
                             autoRejectionEnabled,
                             autoRejectionThreshold
@@ -259,7 +266,7 @@ async function bulkScreenResumeHandler(req, res) {
                         })
                     )
                 );
-                
+
                 // Small cooldown between batches to avoid rate limiting
                 if (i + BATCH_SIZE < tasks.length) {
                     await new Promise(r => setTimeout(r, 500));
@@ -301,13 +308,12 @@ async function processResumeBackground(resumeId, fileExt, filePath, candidateNam
             extractedText = fs.readFileSync(filePath, 'utf8');
         } else {
             // Explicitly handle unsupported types to avoid empty extractedText issues
-            await Resume.findByIdAndUpdate(resumeId, { 
-                status: 'failed', 
-                errorMessage: `Unsupported file type: ${fileExt}` 
+            await Resume.findByIdAndUpdate(resumeId, {
+                status: 'failed',
+                errorMessage: `Unsupported file type: ${fileExt}`
             });
             return;
         }
-
 
         if (!extractedText || extractedText.trim().length < 50) {
             await Resume.findByIdAndUpdate(resumeId, {
@@ -317,13 +323,37 @@ async function processResumeBackground(resumeId, fileExt, filePath, candidateNam
             return;
         }
 
-        // Send to Gemini AI for screening
-        console.log(`🤖 Background: Sending resume to Gemini AI for: ${candidateName}`);
-        const aiResult = await screenResume(extractedText, jobDescription);
+        // Caching System
+        const crypto = require('crypto');
+        const preprocessedResume = cleanText(extractedText);
+        const preprocessedJob = cleanText(jobDescription);
+        
+        // Calculate the cache key by combining resume and job content
+        const cacheHash = crypto.createHash('sha256').update(preprocessedResume + '|||' + preprocessedJob).digest('hex');
+
+        // Look for any existing successfully completed resume matching this hash
+        const cachedResume = await Resume.findOne({ cacheHash, status: 'completed' });
+
+        let aiResult;
+        if (cachedResume) {
+            console.log(`🎯 Cache Hit! Reusing completed AI analysis for hash: ${cacheHash}`);
+            aiResult = {
+                ...cachedResume.screeningResult.toObject(),
+                candidateProfile: cachedResume.candidateProfile ? cachedResume.candidateProfile.toObject() : undefined,
+                skillProficiency: cachedResume.skillProficiency ? cachedResume.skillProficiency.map(s => s.toObject()) : undefined,
+                employmentHistory: cachedResume.employmentHistory ? cachedResume.employmentHistory.map(e => e.toObject()) : undefined,
+                aiNote: cachedResume.aiNote
+            };
+        } else {
+            // Send to the failover AI system
+            console.log(`🤖 Background: Sending resume to AI system for: ${candidateName}`);
+            aiResult = await screenResume(extractedText, jobDescription);
+        }
 
         // Build a single update object with all results
         const updateData = {
             extractedText,
+            cacheHash,
             screeningResult: aiResult,
             candidateProfile: aiResult.candidateProfile,
             skillProficiency: aiResult.skillProficiency,
@@ -379,7 +409,7 @@ async function processResumeBackground(resumeId, fileExt, filePath, candidateNam
                     Resume.findByIdAndUpdate(resumeId, {
                         emailSent: true,
                         emailSentAt: new Date()
-                    }).catch(() => {});
+                    }).catch(() => { });
                     console.log(`📧 Background: Email sent to ${resolvedEmail}`);
                 })
                 .catch(emailErr => {
@@ -408,8 +438,21 @@ async function getAllResumes(req, res) {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        const total = await Resume.countDocuments();
-        const resumes = await Resume.find()
+        // Get all jobs created by this user
+        const userJobs = await Job.find({ createdBy: req.user._id }).select('_id');
+        const jobIds = userJobs.map(j => j._id);
+
+        // Filter: either the resume is associated with one of the user's jobs,
+        // or the resume was explicitly uploaded by the user.
+        const filter = {
+            $or: [
+                { jobId: { $in: jobIds } },
+                { createdBy: req.user._id }
+            ]
+        };
+
+        const total = await Resume.countDocuments(filter);
+        const resumes = await Resume.find(filter)
             .select('-extractedText -filePath')    // Exclude heavy fields
             .sort({ createdAt: -1 })
             .skip(skip)
@@ -435,6 +478,21 @@ async function getResumeById(req, res) {
         if (!resume) {
             return res.status(404).json({ success: false, error: 'Resume not found' });
         }
+
+        // Ownership validation: must be admin, or have created the resume, or created the job associated with the resume
+        let isAuthorized = req.user.role === 'admin' || (resume.createdBy && resume.createdBy.toString() === req.user._id.toString());
+        
+        if (!isAuthorized && resume.jobId) {
+            const job = await Job.findById(resume.jobId);
+            if (job && job.createdBy.toString() === req.user._id.toString()) {
+                isAuthorized = true;
+            }
+        }
+
+        if (!isAuthorized) {
+            return res.status(403).json({ success: false, error: 'Not authorized to access this resume' });
+        }
+
         return res.status(200).json({ success: true, data: resume });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
@@ -448,6 +506,20 @@ async function deleteResume(req, res) {
         const resume = await Resume.findById(req.params.id);
         if (!resume) {
             return res.status(404).json({ success: false, error: 'Resume not found' });
+        }
+
+        // Ownership validation: must be admin, or have created the resume, or created the job associated with the resume
+        let isAuthorized = req.user.role === 'admin' || (resume.createdBy && resume.createdBy.toString() === req.user._id.toString());
+        
+        if (!isAuthorized && resume.jobId) {
+            const job = await Job.findById(resume.jobId);
+            if (job && job.createdBy.toString() === req.user._id.toString()) {
+                isAuthorized = true;
+            }
+        }
+
+        if (!isAuthorized) {
+            return res.status(403).json({ success: false, error: 'Not authorized to delete this resume' });
         }
 
         // Delete file from disk
@@ -467,7 +539,7 @@ async function deleteResume(req, res) {
 async function updatePipelineStage(req, res) {
     try {
         const { stage, sendEmail } = req.body;
-        
+
         const validStages = ['applied', 'screened', 'shortlisted', 'rejected', 'hired'];
         if (!validStages.includes(stage)) {
             return res.status(400).json({ success: false, error: 'Invalid pipeline stage' });
@@ -476,6 +548,20 @@ async function updatePipelineStage(req, res) {
         const resume = await Resume.findById(req.params.id).populate('jobId');
         if (!resume) {
             return res.status(404).json({ success: false, error: 'Resume not found' });
+        }
+
+        // Ownership validation: must be admin, or have created the resume, or created the job associated with the resume
+        let isAuthorized = req.user.role === 'admin' || (resume.createdBy && resume.createdBy.toString() === req.user._id.toString());
+        
+        if (!isAuthorized && resume.jobId) {
+            const jobOwner = resume.jobId.createdBy ? resume.jobId.createdBy.toString() : null;
+            if (jobOwner === req.user._id.toString()) {
+                isAuthorized = true;
+            }
+        }
+
+        if (!isAuthorized) {
+            return res.status(403).json({ success: false, error: 'Not authorized to update this resume' });
         }
 
         resume.pipelineStage = stage;
@@ -487,7 +573,8 @@ async function updatePipelineStage(req, res) {
 
         // Optional email sending logic based on stage (non-blocking)
         if (['shortlisted', 'rejected', 'applied'].includes(stage) && sendEmail) {
-            sendStatusUpdateEmail(resume.candidateEmail, resume.candidateName, resume.jobTitle, stage)
+            const shortReason = resume.screeningResult?.summary || resume.aiNote || '';
+            sendStatusUpdateEmail(resume.candidateEmail, resume.candidateName, resume.jobTitle, stage, shortReason)
                 .catch(err => {
                     console.error(`⚠️ Failed to send ${stage} email to ${resume.candidateEmail}:`, err.message);
                 });
@@ -503,10 +590,25 @@ async function updatePipelineStage(req, res) {
 // Poll processing status for async uploads
 async function getResumeStatus(req, res) {
     try {
-        const resume = await Resume.findById(req.params.id).select('status errorMessage pipelineStage');
+        const resume = await Resume.findById(req.params.id).select('status errorMessage pipelineStage createdBy jobId');
         if (!resume) {
             return res.status(404).json({ success: false, error: 'Resume not found' });
         }
+
+        // Ownership validation: must be admin, or have created the resume, or created the job associated with the resume
+        let isAuthorized = req.user.role === 'admin' || (resume.createdBy && resume.createdBy.toString() === req.user._id.toString());
+        
+        if (!isAuthorized && resume.jobId) {
+            const job = await Job.findById(resume.jobId);
+            if (job && job.createdBy.toString() === req.user._id.toString()) {
+                isAuthorized = true;
+            }
+        }
+
+        if (!isAuthorized) {
+            return res.status(403).json({ success: false, error: 'Not authorized to access this resume status' });
+        }
+
         return res.status(200).json({ success: true, data: resume });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
@@ -521,14 +623,29 @@ async function retryResume(req, res) {
         if (!resume) {
             return res.status(404).json({ success: false, error: 'Resume not found' });
         }
+
+        // Ownership validation: must be admin, or have created the resume, or created the job associated with the resume
+        let isAuthorized = req.user.role === 'admin' || (resume.createdBy && resume.createdBy.toString() === req.user._id.toString());
+        
+        if (!isAuthorized && resume.jobId) {
+            const job = await Job.findById(resume.jobId);
+            if (job && job.createdBy.toString() === req.user._id.toString()) {
+                isAuthorized = true;
+            }
+        }
+
+        if (!isAuthorized) {
+            return res.status(403).json({ success: false, error: 'Not authorized to retry this resume' });
+        }
+
         if (resume.status !== 'failed') {
             return res.status(400).json({ success: false, error: 'Only failed resumes can be retried' });
         }
 
         // Reset status to pending
-        await Resume.findByIdAndUpdate(resume._id, { 
-            status: 'pending', 
-            errorMessage: null 
+        await Resume.findByIdAndUpdate(resume._id, {
+            status: 'pending',
+            errorMessage: null
         });
 
         // Re-trigger background processing
@@ -558,9 +675,9 @@ async function retryResume(req, res) {
             );
         }, 100);
 
-        return res.status(202).json({ 
-            success: true, 
-            message: 'Resume re-queued for processing' 
+        return res.status(202).json({
+            success: true,
+            message: 'Resume re-queued for processing'
         });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
