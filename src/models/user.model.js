@@ -95,9 +95,10 @@ const userSchema = new mongoose.Schema({
 });
 
 // Encrypt password using bcrypt
-userSchema.pre('save', async function(next) {
+// Note: async pre-save hooks in Mongoose 6+ should NOT call next() — just return or throw
+userSchema.pre('save', async function() {
     if (!this.isModified('password')) {
-        return next();
+        return; // just return; Mongoose handles the rest
     }
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);

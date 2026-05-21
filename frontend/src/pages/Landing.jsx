@@ -225,7 +225,7 @@ const Landing = () => {
   };
 
   const features = [
-    { icon: Brain, color: 'bg-accent-primary', title: 'AI-Powered Screening', desc: 'Gemini AI reads every resume and scores candidates against your job requirements with 95%+ accuracy — in seconds, not hours.' },
+    { icon: Brain, color: 'bg-accent-primary', title: 'AI-Powered Screening', desc: 'Our AI reads every resume and scores candidates against your job requirements with 95%+ accuracy — in seconds, not hours.' },
     { icon: Zap, color: 'bg-accent-secondary', title: 'Instant Ranking', desc: 'Candidates are automatically ranked and routed through your pipeline. No more spreadsheets. No more back-and-forth.' },
     { icon: BarChart3, color: 'bg-[#08544A]', title: 'Deep Analytics', desc: 'Track hiring funnels, match score distributions, and team performance from a single beautiful dashboard.' },
     { icon: Target, color: 'bg-accent-primary/80', title: 'Smart Match Scoring', desc: 'Every resume gets a precise match score based on skills, experience, and role requirements — fully configurable.' },
@@ -339,13 +339,18 @@ const Landing = () => {
             </div>
 
             {/* Badge */}
-            <motion.div 
+            <motion.div
               variants={itemVariants}
-              whileHover={{ scale: 1.02 }}
-              className="inline-flex items-center gap-2 bg-white/5 dark:bg-accent-primary/10 border border-accent-primary/20 text-accent-primary px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-6 shadow-2xl shadow-accent-primary/5 cursor-default"
+              className="flex items-center gap-3 mb-6 cursor-default select-none"
             >
-              <Sparkles size={13} className="animate-pulse" />
-              Next-Gen AI Recruitment
+              <div className="flex items-center gap-1.5">
+                <div className="w-5 h-[2px] rounded-full bg-accent-primary" />
+                <div className="w-2 h-[2px] rounded-full bg-accent-primary/40" />
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-[0.2em] text-accent-primary flex items-center gap-1.5">
+                <Sparkles size={11} className="opacity-80" />
+                AI-Powered Recruitment Platform
+              </span>
             </motion.div>
 
             {/* Headline */}
@@ -370,7 +375,7 @@ const Landing = () => {
               variants={itemVariants}
               className="text-lg md:text-xl text-text-secondary max-w-xl leading-relaxed mb-8 font-medium"
             >
-              SmartHire uses <span className="text-text-primary font-bold">Gemini AI</span> to rank resumes with 95% accuracy, so you can stop filtering and start hiring your dream team in minutes.
+              SmartHire uses <span className="text-text-primary font-bold">Groq AI</span> to rank resumes with 95% accuracy, so you can stop filtering and start hiring your dream team in minutes.
             </motion.p>
 
             {/* Direct signup inline form or simple premium CTA button group */}
@@ -590,7 +595,11 @@ const Landing = () => {
       >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <div className="inline-block text-xs font-bold uppercase tracking-widest text-accent-primary bg-accent-primary/10 px-3 py-1 rounded-full mb-4">Features</div>
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="w-6 h-[2px] rounded-full bg-accent-primary" />
+              <span className="text-[11px] font-black uppercase tracking-[0.18em] text-accent-primary">Features</span>
+              <div className="w-6 h-[2px] rounded-full bg-accent-primary" />
+            </div>
             <h2 className="text-4xl font-black text-text-primary mb-4">Everything you need to hire better</h2>
             <p className="text-text-secondary text-lg max-w-2xl mx-auto">From resume parsing to pipeline management — SmartHire handles the entire hiring workflow so your team doesn't have to.</p>
           </div>
@@ -611,7 +620,10 @@ const Landing = () => {
       >
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
           <div>
-            <div className="inline-block text-xs font-bold uppercase tracking-widest text-accent-secondary bg-accent-secondary/10 px-3 py-1 rounded-full mb-6">How It Works</div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-6 h-[2px] rounded-full bg-accent-secondary" />
+              <span className="text-[11px] font-black uppercase tracking-[0.18em] text-accent-secondary">How It Works</span>
+            </div>
             <h2 className="text-4xl font-black text-text-primary mb-4">From job post to hired in days, not months.</h2>
             <p className="text-text-secondary mb-10 leading-relaxed">SmartHire automates the heaviest part of recruiting — the initial screening — and hands you a prioritized shortlist before your morning coffee.</p>
             <div className="space-y-7">
@@ -669,7 +681,11 @@ const Landing = () => {
       >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16 animate-slide-up">
-            <div className="inline-block text-xs font-bold uppercase tracking-widest text-accent-primary bg-accent-primary/10 px-3 py-1 rounded-full mb-4">Pricing</div>
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="w-6 h-[2px] rounded-full bg-accent-primary" />
+              <span className="text-[11px] font-black uppercase tracking-[0.18em] text-accent-primary">Pricing</span>
+              <div className="w-6 h-[2px] rounded-full bg-accent-primary" />
+            </div>
             <h2 className="text-4xl font-black text-text-primary mb-4">Simple, transparent pricing</h2>
             <p className="text-text-secondary text-lg max-w-2xl mx-auto">Start for free. Upgrade when your team grows.</p>
           </div>
@@ -730,13 +746,17 @@ const Landing = () => {
         className="py-24 px-6 bg-card/20 border-t border-border"
       >
         <div className="max-w-4xl mx-auto text-center animate-slide-up">
-          <div className="inline-block text-xs font-bold uppercase tracking-widest text-accent-secondary bg-accent-secondary/10 px-3 py-1 rounded-full mb-6">About Us</div>
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="w-6 h-[2px] rounded-full bg-accent-secondary" />
+            <span className="text-[11px] font-black uppercase tracking-[0.18em] text-accent-secondary">About Us</span>
+            <div className="w-6 h-[2px] rounded-full bg-accent-secondary" />
+          </div>
           <h2 className="text-3xl md:text-5xl font-black text-text-primary mb-8 leading-tight">Built by recruiters,<br/>powered by AI.</h2>
           <p className="text-lg text-text-secondary leading-relaxed mb-8">
             SmartHire was founded in 2026 with a simple mission: to eliminate the soul-crushing work of reading thousands of unqualified resumes, so recruiters can get back to what matters — talking to great people.
           </p>
           <p className="text-lg text-text-secondary leading-relaxed mb-12">
-            By leveraging the cutting-edge reasoning capabilities of Google Gemini, we've built a system that understands context, skills, and potential just like a human recruiter does — but infinitely faster.
+            By leveraging the cutting-edge reasoning capabilities of Groq AI, we've built a system that understands context, skills, and potential just like a human recruiter does — but infinitely faster.
           </p>
           <div className="flex justify-center">
             <div className="w-16 h-1 bg-accent-primary/20 rounded-full"></div>
@@ -754,7 +774,11 @@ const Landing = () => {
       >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <div className="inline-block text-xs font-bold uppercase tracking-widest text-accent-primary bg-accent-primary/10 px-3 py-1 rounded-full mb-4">Success Stories</div>
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="w-6 h-[2px] rounded-full bg-accent-primary" />
+              <span className="text-[11px] font-black uppercase tracking-[0.18em] text-accent-primary">Success Stories</span>
+              <div className="w-6 h-[2px] rounded-full bg-accent-primary" />
+            </div>
             <h2 className="text-4xl font-black text-text-primary mb-4">Trusted by the world's best hiring teams</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -779,7 +803,7 @@ const Landing = () => {
           <div className="space-y-2">
             <FAQItem 
               question="How accurate is the AI scoring?" 
-              answer="Our AI engine is powered by Google Gemini and achieves over 95% accuracy in matching candidate skills and experience against job requirements. It performs exactly like a human recruiter but in a fraction of the time."
+              answer="Our AI engine is powered by Groq AI and achieves over 95% accuracy in matching candidate skills and experience against job requirements. It performs exactly like a human recruiter but in a fraction of the time."
             />
             <FAQItem 
               question="Can I upload resumes in different formats?" 

@@ -262,7 +262,11 @@ exports.login = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
-        const user = await User.findOne({ email });
+        if (!email) {
+            return res.status(400).json({ success: false, error: 'Please provide your email address.' });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase().trim() });
 
         if (!user) {
             // Always return success even if user doesn't exist to prevent email enumeration
@@ -271,30 +275,34 @@ exports.forgotPassword = async (req, res) => {
 
         // Create reset token
         const resetToken = crypto.randomBytes(32).toString('hex');
-        
-        // Hash token and save to user
-        user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-        user.resetPasswordExpires = Date.now() + 30 * 60 * 1000; // 30 minutes
-        
-        await user.save({ validateBeforeSave: false });
+        const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+        const tokenExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
 
-        // Create reset url (frontend URL)
+        // Use findByIdAndUpdate to avoid triggering the pre-save password-hashing hook
+        await User.findByIdAndUpdate(user._id, {
+            resetPasswordToken: hashedToken,
+            resetPasswordExpires: tokenExpires
+        });
+
+        // Build reset URL
         const origins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:5173'];
         const originUrl = origins.find(o => o.includes('5173')) || origins[0];
         const resetUrl = `${originUrl}/reset-password/${resetToken}`;
 
         try {
             await sendPasswordResetEmail(user.email, user.name, resetUrl);
-            res.status(200).json({ success: true, message: 'Reset link sent to email' });
-        } catch (err) {
-            user.resetPasswordToken = undefined;
-            user.resetPasswordExpires = undefined;
-            await user.save({ validateBeforeSave: false });
-            return res.status(500).json({ success: false, error: 'Email could not be sent' });
+            return res.status(200).json({ success: true, message: 'Reset link sent to email' });
+        } catch (emailErr) {
+            console.error('❌ Password reset email failed:', emailErr.message);
+            // Clear the token so it can be re-requested
+            await User.findByIdAndUpdate(user._id, {
+                $unset: { resetPasswordToken: 1, resetPasswordExpires: 1 }
+            });
+            return res.status(503).json({ success: false, error: 'Could not send the reset email. Please try again in a few minutes.' });
         }
     } catch (error) {
-        console.error('❌ Forgot Password Error:', error);
-        res.status(500).json({ success: false, error: 'Internal server error' });
+        console.error('❌ Forgot Password Error:', error.message, error.stack);
+        res.status(500).json({ success: false, error: `Password reset failed: ${error.message}` });
     }
 };
 

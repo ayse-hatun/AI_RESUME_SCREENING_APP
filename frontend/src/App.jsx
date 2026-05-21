@@ -5,6 +5,7 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import VerifyEmail from './pages/VerifyEmail';
+import ResetPassword from './pages/ResetPassword';
 import { Menu } from 'lucide-react';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -86,6 +87,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/apply/:jobId" element={<PublicApply />} />
         
         {/* Candidate / Careers Routes */}

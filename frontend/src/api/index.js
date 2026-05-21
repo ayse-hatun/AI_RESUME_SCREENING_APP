@@ -35,8 +35,11 @@ API.interceptors.response.use(
             friendlyMessage = 'The request is taking too long due to a slow connection. Please try again.';
         }
         // 3. Server or Data Integrity Issues (e.g. data deleted manually)
+        // Only apply generic fallback if the server did NOT provide a specific error message
         else if (status >= 500) {
-            friendlyMessage = 'The server encountered an issue. Some data might be missing or temporarily unavailable.';
+            if (!error.response?.data?.error) {
+                friendlyMessage = 'The server encountered an issue. Some data might be missing or temporarily unavailable.';
+            }
         } 
         else if (status === 404) {
             if (!error.response.data.error) {
@@ -57,8 +60,11 @@ API.interceptors.response.use(
 export const login = (data) => API.post('/auth/login', data);
 export const register = (data) => API.post('/auth/register', data);
 export const verifyEmail = (data) => API.post('/auth/verify-email', data);
+export const forgotPassword = (data) => API.post('/auth/forgot-password', data);
+export const resetPassword = (token, data) => API.put(`/auth/reset-password/${token}`, data);
 export const fetchMe = () => API.get('/auth/me');
 export const updateProfile = (data) => API.put('/auth/profile', data);
+
 
 export const fetchJobs = () => API.get('/jobs');
 export const fetchJobById = (id) => API.get(`/jobs/${id}`);

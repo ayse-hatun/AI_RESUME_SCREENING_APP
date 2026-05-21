@@ -42,8 +42,11 @@ cleanup.js
 debug-key.js
 find-model.js
 list-models-raw.js
+migrate-resumes.js
+install_logo.js
 *.test.pdf
 test-resume.pdf
+push_to_github.bat
 
 # ─── Stale Directories ──────────────────────────────────────────
 color palatte/

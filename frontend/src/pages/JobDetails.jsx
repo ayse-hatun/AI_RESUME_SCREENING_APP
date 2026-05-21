@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { fetchJobById, fetchResumes, updateResumeStage, deleteResume, retryResume } from '../api';
 import { MoreHorizontal, Plus, Search, Filter, Mail, Star, Ban, ChevronRight, Link, ArrowLeft, Trash2, AlertTriangle, Loader2, RefreshCw, CheckCircle2, ExternalLink, CheckSquare, X, Info } from 'lucide-react';
@@ -226,6 +226,7 @@ const JobDetails = () => {
   const [showUpload, setShowUpload] = useState(false);
   const [showStatsToast, setShowStatsToast] = useState(false);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
+  const toastTimeoutRef = useRef(null);
 
   const loadData = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -246,7 +247,8 @@ const JobDetails = () => {
       if (!silent && !initialLoadDone && filteredResumes.length > 0) {
         setInitialLoadDone(true);
         setShowStatsToast(true);
-        setTimeout(() => setShowStatsToast(false), 8000);
+        clearTimeout(toastTimeoutRef.current);
+        toastTimeoutRef.current = setTimeout(() => setShowStatsToast(false), 8000);
       }
     } catch (err) {
       console.error('Error fetching job details');
@@ -330,7 +332,10 @@ const JobDetails = () => {
       loadData(true);
     }, 5000);
 
-    return () => clearInterval(pollInterval);
+    return () => {
+      clearInterval(pollInterval);
+      clearTimeout(toastTimeoutRef.current);
+    };
   }, [id]);
 
   if (loading) return <div className="p-10 text-text-primary">Loading pipeline...</div>;
@@ -344,25 +349,77 @@ const JobDetails = () => {
 
   return (
     <div className="p-8 h-screen flex flex-col relative overflow-hidden">
-      {/* Stats Notification Toast */}
-      {showStatsToast && (
-        <div className="absolute top-8 right-8 z-50 animate-slide-up">
-          <div className="bg-card border border-border shadow-2xl rounded-2xl p-4 flex gap-4 max-w-sm">
-            <div className="w-10 h-10 rounded-full bg-accent-primary/10 flex items-center justify-center text-accent-primary shrink-0">
-              <Info size={20} />
+      {/* Pipeline Overview Modal — centered, prominent */}
+      {showStatsToast && (() => {
+        const total = resumes.length;
+        const screened = resumes.filter(r => r.status === 'completed').length;
+        const shortlisted = resumes.filter(r => r.pipelineStage === 'shortlisted').length;
+        const rejected = resumes.filter(r => r.pipelineStage === 'rejected').length;
+        const autoRejected = resumes.filter(r => r.pipelineStage === 'rejected' && r.aiNote?.includes('[AUTO-REJECTED]')).length;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}>
+            <div className="w-full max-w-md animate-slide-up">
+              {/* Header */}
+              <div className="rounded-t-2xl px-6 py-5 flex items-center justify-between" style={{ background: 'linear-gradient(135deg, #08544A, #32BB32)' }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center">
+                    <Info size={22} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-white text-lg leading-tight">Pipeline Overview</h3>
+                    <p className="text-white/70 text-xs font-medium">{job?.title} • Summary</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowStatsToast(false)}
+                  className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/25 flex items-center justify-center text-white transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Stats Grid */}
+              <div className="bg-card rounded-b-2xl border border-border border-t-0 shadow-2xl">
+                <div className="grid grid-cols-2 gap-px bg-border">
+                  <div className="bg-card px-6 py-5">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-text-muted mb-1">Total Candidates</p>
+                    <p className="text-4xl font-black text-text-primary">{total}</p>
+                  </div>
+                  <div className="bg-card px-6 py-5">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-accent-primary mb-1">AI Screened</p>
+                    <p className="text-4xl font-black text-accent-primary">{screened}</p>
+                  </div>
+                  <div className="bg-card px-6 py-5">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-accent-secondary mb-1">Shortlisted</p>
+                    <p className="text-4xl font-black text-accent-secondary">{shortlisted}</p>
+                  </div>
+                  <div className="bg-card px-6 py-5">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-accent-danger mb-1">Rejected</p>
+                    <p className="text-4xl font-black text-accent-danger">{rejected}</p>
+                  </div>
+                </div>
+                {/* Auto-rejected highlight row */}
+                <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-accent-danger animate-pulse" />
+                    <span className="text-sm font-bold text-text-primary">Auto-Rejected by AI</span>
+                  </div>
+                  <span className="text-2xl font-black text-accent-danger">{autoRejected}</span>
+                </div>
+                {/* Dismiss */}
+                <div className="px-6 pb-5">
+                  <button
+                    onClick={() => setShowStatsToast(false)}
+                    className="w-full py-3 rounded-xl bg-accent-primary hover:bg-accent-primary/90 text-white font-bold text-sm transition-all shadow-lg shadow-accent-primary/20"
+                  >
+                    Got it, show pipeline
+                  </button>
+                </div>
+              </div>
             </div>
-            <div>
-              <h4 className="font-bold text-text-primary text-sm mb-1">Pipeline Overview</h4>
-              <p className="text-xs text-text-secondary">
-                Total <strong>{resumes.length}</strong> candidates applied and <strong>{resumes.filter(r => r.pipelineStage === 'rejected' && r.aiNote?.includes('[AUTO-REJECTED]')).length}</strong> auto-rejected.
-              </p>
-            </div>
-            <button onClick={() => setShowStatsToast(false)} className="text-text-muted hover:text-text-primary h-fit p-1">
-              <X size={16} />
-            </button>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <div className="flex justify-between items-start mb-8">
         <div>
