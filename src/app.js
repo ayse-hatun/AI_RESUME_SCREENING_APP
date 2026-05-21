@@ -10,9 +10,13 @@ const mongoSanitize = require('express-mongo-sanitize');
 const hpp = require('hpp');
 const app = express();
 
-// Trust proxy only in deployed environments (Render, Vercel, etc.) to prevent
-// X-Forwarded-* header spoofing in local / non-proxied setups.
-if (process.env.NODE_ENV === 'production' || process.env.TRUST_PROXY === 'true') {
+// Trust proxy in deployed environments (Railway, Render, Vercel, etc.).
+// Railway auto-injects RAILWAY_ENVIRONMENT; NODE_ENV or TRUST_PROXY also work.
+if (
+    process.env.NODE_ENV === 'production' ||
+    process.env.TRUST_PROXY === 'true' ||
+    process.env.RAILWAY_ENVIRONMENT !== undefined
+) {
     app.set('trust proxy', 1);
 }
 
@@ -35,7 +39,8 @@ app.use(helmet());                      // Set security HTTP headers
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // limit each IP to 100 requests per windowMs
-    message: { success: false, error: 'Too many requests from this IP, please try again in 15 minutes' }
+    message: { success: false, error: 'Too many requests from this IP, please try again in 15 minutes' },
+    validate: { trustProxy: false } // Suppress false-positive proxy warning; trust proxy set above
 });
 app.use('/api/', limiter);
 
@@ -43,6 +48,7 @@ app.use('/api/', limiter);
 // Allow localhost in dev + the deployed Vercel URL in production (set FRONTEND_URL in Render env vars)
 const allowedOrigins = [
     /^https?:\/\/localhost(:\d+)?$/,     // Any localhost port (dev)
+    /^https?:\/\/127\.0\.0\.1(:\d+)?$/,  // 127.0.0.1 dev
     process.env.FRONTEND_URL,             // e.g. https://your-app.vercel.app
     /^https:\/\/.*\.vercel\.app$/        // Any Vercel preview deployment
 ].filter(Boolean);

@@ -27,7 +27,8 @@ const Signup = () => {
       // But register doesn't return token. So redirect to login.
       navigate('/login');
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
+      const serverError = err.response?.data?.error || err.message || 'Registration failed. Please try again.';
+      setError(serverError);
     } finally {
       setLoading(false);
     }
@@ -168,8 +169,9 @@ const Signup = () => {
                   className="input-field w-full pl-12"
                   placeholder="••••••••"
                   required
-                  minLength="6"
+                  minLength="8"
                 />
+                <p className="text-[10px] text-text-muted mt-1 ml-1">Minimum 8 characters</p>
               </div>
             </div>
 

@@ -12,13 +12,15 @@ const rateLimit = require('express-rate-limit');
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: parseInt(process.env.AUTH_RATE_LIMIT_LOGIN, 10) || 10, // stricter – brute-force target
-    message: { success: false, error: 'Too many login attempts, please try again in 15 minutes' }
+    message: { success: false, error: 'Too many login attempts, please try again in 15 minutes' },
+    validate: { trustProxy: false }
 });
 
 const registerLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: parseInt(process.env.AUTH_RATE_LIMIT_REGISTER, 10) || 15, // slightly more lenient
-    message: { success: false, error: 'Too many registration attempts, please try again in 15 minutes' }
+    message: { success: false, error: 'Too many registration attempts, please try again in 15 minutes' },
+    validate: { trustProxy: false }
 });
 
 router.post('/register', registerLimiter, validateRegister, register);

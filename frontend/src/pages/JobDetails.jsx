@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { fetchJobById, fetchResumes, updateResumeStage, deleteResume, retryResume } from '../api';
-import { MoreHorizontal, Plus, Search, Filter, Mail, Star, Ban, ChevronRight, Link, ArrowLeft, Trash2, AlertTriangle, Loader2, RefreshCw, CheckCircle2, ExternalLink, CheckSquare } from 'lucide-react';
+import { MoreHorizontal, Plus, Search, Filter, Mail, Star, Ban, ChevronRight, Link, ArrowLeft, Trash2, AlertTriangle, Loader2, RefreshCw, CheckCircle2, ExternalLink, CheckSquare, X, Info } from 'lucide-react';
 import CandidateModal from '../components/modals/CandidateModal';
 import BulkUploadModal from '../components/modals/BulkUploadModal';
 
@@ -224,6 +224,8 @@ const JobDetails = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
+  const [showStatsToast, setShowStatsToast] = useState(false);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   const loadData = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -234,10 +236,18 @@ const JobDetails = () => {
       ]);
       setJob(jobRes.data.data);
       const jobData = jobRes.data.data;
-      setResumes(resumesRes.data.data.filter(r => 
+      const filteredResumes = resumesRes.data.data.filter(r => 
         r.jobId === id || 
         (r.jobTitle && r.jobTitle.trim().toLowerCase() === jobData.title?.trim().toLowerCase())
-      ));
+      );
+      setResumes(filteredResumes);
+      
+      // Show stats toast on first load
+      if (!silent && !initialLoadDone && filteredResumes.length > 0) {
+        setInitialLoadDone(true);
+        setShowStatsToast(true);
+        setTimeout(() => setShowStatsToast(false), 8000);
+      }
     } catch (err) {
       console.error('Error fetching job details');
     } finally {
@@ -333,7 +343,27 @@ const JobDetails = () => {
   ];
 
   return (
-    <div className="p-8 h-screen flex flex-col">
+    <div className="p-8 h-screen flex flex-col relative overflow-hidden">
+      {/* Stats Notification Toast */}
+      {showStatsToast && (
+        <div className="absolute top-8 right-8 z-50 animate-slide-up">
+          <div className="bg-card border border-border shadow-2xl rounded-2xl p-4 flex gap-4 max-w-sm">
+            <div className="w-10 h-10 rounded-full bg-accent-primary/10 flex items-center justify-center text-accent-primary shrink-0">
+              <Info size={20} />
+            </div>
+            <div>
+              <h4 className="font-bold text-text-primary text-sm mb-1">Pipeline Overview</h4>
+              <p className="text-xs text-text-secondary">
+                Total <strong>{resumes.length}</strong> candidates applied and <strong>{resumes.filter(r => r.pipelineStage === 'rejected' && r.aiNote?.includes('[AUTO-REJECTED]')).length}</strong> auto-rejected.
+              </p>
+            </div>
+            <button onClick={() => setShowStatsToast(false)} className="text-text-muted hover:text-text-primary h-fit p-1">
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-start mb-8">
         <div>
           <div className="flex items-center gap-2 mb-4">
@@ -384,11 +414,18 @@ const JobDetails = () => {
             key={col.stage}
             title={col.title}
             color={col.color}
-            resumes={resumes.filter(r => 
-              r.pipelineStage === col.stage || 
-              (col.stage === 'applied' && (r.status === 'pending' || r.status === 'processing' || r.status === 'failed')) ||
-              (col.stage === 'completed' && r.status === 'completed' && (!r.pipelineStage || r.pipelineStage === 'applied'))
-            )}
+            resumes={resumes.filter(r => {
+              if (col.stage === 'applied') {
+                // Only show in Applied if it's pending/processing/failed
+                return r.status === 'pending' || r.status === 'processing' || r.status === 'failed';
+              }
+              if (col.stage === 'completed') {
+                // Show in Screened if it's completed AND it hasn't been moved to shortlisted/rejected/hired
+                return r.status === 'completed' && (!r.pipelineStage || r.pipelineStage === 'applied' || r.pipelineStage === 'screened');
+              }
+              // For shortlisted and rejected, just match the pipelineStage exactly
+              return r.pipelineStage === col.stage;
+            })}
             onCardClick={(res) => setSelectedCandidate(res)}
             onDelete={handleDeleteCandidate}
             onRetry={handleRetryResume}

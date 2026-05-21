@@ -1,280 +1,349 @@
-// AI Service
-// Handles structured screening using a Multi-LLM Failover System:
-// PRIMARY:  Google Gemini API      (gemini-2.0-flash)
-// BACKUP_1: OpenAI API             (gpt-4o-mini)
-// BACKUP_2: OpenRouter             (google/gemini-2.0-flash-lite:free)
-// BACKUP_3: OpenRouter (fallback)  (meta-llama/llama-3.1-8b-instruct:free)
+// AI Screening Service — Production Grade v4
+// Uses axios (not native fetch) — more reliable on all Node.js versions & networks.
+//
+// Provider priority:
+//   1. Groq API         — free 500K tokens/day, Llama 3.3 70B, accessible globally
+//   2. Direct Gemini    — if key has quota and region allows
+//   3. OpenRouter       — dynamically discovered free models
+//   4. Offline fallback — deterministic, no AI call
+
+'use strict';
 
 require('dotenv').config({ override: true });
+const axios         = require('axios');
 const { GoogleGenAI } = require('@google/genai');
 
-// --- Global Rate Limiter & Queue ---
-// Limits execution to 1 request at a time with a minimum delay between requests
-// to respect the Free Tier 15 Requests Per Minute (RPM) limit.
-const queue = [];
-let isProcessing = false;
-const MIN_DELAY_MS = 4200; // 4.2 seconds between requests ensures max ~14 RPM
+// ─── Token Budget ─────────────────────────────────────────────────────────────
+const MAX_RESUME_CHARS = 8000;  // ~2 000 tokens
+const MAX_JOB_CHARS    = 2000;  // ~500  tokens
 
-async function processQueue() {
-    if (isProcessing || queue.length === 0) return;
-    isProcessing = true;
+// ─── Gemini Sequential Rate-Limit Queue ───────────────────────────────────────
+const GEMINI_MIN_INTERVAL_MS = 4500; // ~13 RPM — safely under 15 RPM free cap
+let _geminiTail   = Promise.resolve();
+let _lastCallTime = 0;
 
-    while (queue.length > 0) {
-        const { execute, resolve, reject } = queue.shift();
-        const startTime = Date.now();
-        
-        try {
-            const result = await execute();
-            resolve(result);
-        } catch (err) {
-            reject(err);
-        }
-
-        // Wait to enforce the RPM limit before processing the next item
-        const elapsed = Date.now() - startTime;
-        if (elapsed < MIN_DELAY_MS && queue.length > 0) {
-            await new Promise(r => setTimeout(r, MIN_DELAY_MS - elapsed));
-        }
-    }
-
-    isProcessing = false;
-}
-
-function enqueueTask(executeFn) {
-    return new Promise((resolve, reject) => {
-        queue.push({ execute: executeFn, resolve, reject });
-        processQueue(); // Start processing if not already running
+function scheduleGeminiCall(fn) {
+    const call = _geminiTail.then(async () => {
+        const wait = GEMINI_MIN_INTERVAL_MS - (Date.now() - _lastCallTime);
+        if (wait > 0 && _lastCallTime > 0) await new Promise(r => setTimeout(r, wait));
+        _lastCallTime = Date.now();
+        return fn();
     });
+    _geminiTail = call.catch(() => {});
+    return call;
 }
 
-// --- Text Optimization / Token Preprocessing ---
+// ─── Dynamic OpenRouter Model Discovery ───────────────────────────────────────
+let _cachedFreeModels = null;
+let _cacheTimestamp   = 0;
+const MODEL_CACHE_TTL = 30 * 60 * 1000;
+
+const PREFERRED_OPENROUTER_MODELS = [
+    'google/gemini-2.0-flash-exp:free',
+    'google/gemma-3-27b-it:free',
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'deepseek/deepseek-r1:free',
+    'qwen/qwen3-235b-a22b:free',
+    'meta-llama/llama-3.1-8b-instruct:free',
+    'meta-llama/llama-3.2-3b-instruct:free',
+];
+
+async function discoverFreeModels() {
+    const now = Date.now();
+    if (_cachedFreeModels && (now - _cacheTimestamp) < MODEL_CACHE_TTL) {
+        return _cachedFreeModels;
+    }
+    const key = process.env.OPENROUTER_API_KEY;
+    if (!key) return [];
+
+    try {
+        const { data } = await axios.get('https://openrouter.ai/api/v1/models', {
+            headers: { Authorization: `Bearer ${key}` },
+            timeout: 10000
+        });
+        const liveIds = new Set(
+            (data?.data ?? []).filter(m => m.id.endsWith(':free')).map(m => m.id)
+        );
+        const ordered = PREFERRED_OPENROUTER_MODELS.filter(id => liveIds.has(id));
+        for (const id of liveIds) { if (!ordered.includes(id)) ordered.push(id); }
+        _cachedFreeModels = ordered.slice(0, 8);
+        _cacheTimestamp   = now;
+        console.log(`🌐 [OpenRouter] ${_cachedFreeModels.length} live free models:`, _cachedFreeModels);
+        return _cachedFreeModels;
+    } catch (err) {
+        console.warn('⚠️  [OpenRouter] Model discovery failed:', err.message);
+        _cachedFreeModels = PREFERRED_OPENROUTER_MODELS;
+        _cacheTimestamp   = now;
+        return _cachedFreeModels;
+    }
+}
+
+discoverFreeModels().catch(() => {}); // warm cache at startup
+
+// ─── Text Preprocessor ────────────────────────────────────────────────────────
 const STOP_WORDS = new Set([
-    "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "as", "at", 
-    "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "could", "did", "do", 
-    "does", "doing", "down", "during", "each", "few", "for", "from", "further", "had", "has", "have", "having", 
-    "he", "her", "here", "hers", "herself", "him", "himself", "his", "how", "i", "if", "in", "into", "is", "it", 
-    "its", "itself", "me", "more", "most", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", 
-    "or", "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same", "she", "should", "so", 
-    "some", "such", "than", "that", "the", "their", "theirs", "them", "themselves", "then", "there", "these", 
-    "they", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "we", "were", "what", 
-    "when", "where", "which", "while", "who", "whom", "why", "with", "would", "you", "your", "yours", "yourself", "yourselves"
+    'a','about','above','after','again','against','all','am','an','and','any','are','as','at',
+    'be','because','been','before','being','below','between','both','but','by','could','did',
+    'do','does','doing','down','during','each','few','for','from','further','had','has','have',
+    'having','he','her','here','hers','herself','him','himself','his','how','i','if','in','into',
+    'is','it','its','itself','me','more','most','my','myself','no','nor','not','of','off','on',
+    'once','only','or','other','our','ours','ourselves','out','over','own','same','she','should',
+    'so','some','such','than','that','the','their','theirs','them','themselves','then','there',
+    'these','they','this','those','through','to','too','under','until','up','very','was','we',
+    'were','what','when','where','which','while','who','whom','why','with','would','you','your',
+    'yours','yourself','yourselves'
 ]);
 
-function cleanText(text) {
+function preprocessText(text, maxChars) {
     if (!text) return '';
-    // Normalize newlines and whitespace
-    let clean = text.replace(/\r\n/g, '\n').replace(/\s+/g, ' ');
-    // Keep casing but clean stop words
-    const words = clean.split(' ');
-    const filteredWords = words.filter(word => !STOP_WORDS.has(word.toLowerCase()));
-    
-    // Trim to roughly 3,000 tokens (~12,000 characters)
-    return filteredWords.join(' ').substring(0, 12000).trim();
+    return text
+        .replace(/\r\n/g, '\n')
+        .replace(/[ \t]+/g, ' ')
+        .replace(/\n{3,}/g, '\n\n')
+        .split(' ')
+        .filter(w => !STOP_WORDS.has(w.toLowerCase()))
+        .join(' ')
+        .substring(0, maxChars)
+        .trim();
 }
 
-// --- Robust JSON parser: strips markdown fences and extracts first JSON object ---
-function safeParseJSON(rawText) {
-    if (!rawText) throw new Error('Empty response from LLM');
-    // Strip markdown code fences like ```json ... ```
-    let cleaned = rawText.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
-    // Try direct parse first
+function cleanText(text) { return preprocessText(text, MAX_RESUME_CHARS); }
+
+// ─── JSON Parser ──────────────────────────────────────────────────────────────
+function safeParseJSON(raw) {
+    if (!raw) throw new Error('Empty LLM response');
+    const cleaned = raw.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
     try { return JSON.parse(cleaned); } catch (_) {}
-    // Extract first {...} block from the text
     const match = cleaned.match(/\{[\s\S]*\}/);
-    if (match) {
-        try { return JSON.parse(match[0]); } catch (_) {}
-    }
-    throw new Error(`Could not parse JSON from LLM response: ${rawText.substring(0, 200)}`);
+    if (match) { try { return JSON.parse(match[0]); } catch (_) {} }
+    throw new Error(`JSON parse failed: ${raw.substring(0, 300)}`);
 }
 
-// --- Failover HTTP request helper ---
-// NOTE: response_format is intentionally omitted — xAI (Grok) and OpenRouter do not support it.
-// JSON output is enforced via the prompt instead.
-async function callOpenAICompatible(url, apiKey, model, prompt) {
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-            'HTTP-Referer': 'http://localhost:3000',
-            'X-Title': 'SmartHire'
+// ─── Prompt ────────────────────────────────────────────────────────────────────
+function buildPrompt(resumeText, jobText) {
+    return `You are an expert ATS. Analyse the resume against the job description.
+Return ONLY a valid JSON object — no markdown fences, no extra text.
+
+JOB DESCRIPTION:
+${jobText}
+
+RESUME:
+${resumeText}
+
+Required JSON schema:
+{
+  "matchScore": <integer 0-100>,
+  "verdict": "<Highly Recommended|Recommended|Borderline|Not Recommended>",
+  "summary": "<2-3 sentence assessment>",
+  "strengths": ["<str>"],
+  "weaknesses": ["<str>"],
+  "skills": { "matched": ["<skill>"], "missing": ["<skill>"] },
+  "experienceMatch": "<Exceeds|Meets|Below expectations>",
+  "recommendation": "<shortlist|reject|review>",
+  "candidateProfile": {
+    "name": "<full name or null>",
+    "email": "<email or null>",
+    "location": "<city/country or null>",
+    "totalExperienceYears": <number>,
+    "university": "<institution or null>",
+    "availability": "<availability or null>"
+  },
+  "skillProficiency": [
+    { "skill": "<name>", "level": "<Beginner|Intermediate|Advanced|Expert>", "percentage": <0-100> }
+  ],
+  "employmentHistory": [
+    { "company": "<name>", "role": "<title>", "duration": "<period>", "description": "<1 line>" }
+  ],
+  "aiNote": "<1 sentence key insight>"
+}`;
+}
+
+// ─── Groq API Call (axios) ────────────────────────────────────────────────────
+// Groq: free 500K tokens/day, 6K tokens/min. Models: llama-3.3-70b, gemma2-9b
+const GROQ_MODELS = [
+    'llama-3.3-70b-versatile',  // best quality, 6K TPM
+    'gemma2-9b-it',             // faster, lighter
+    'llama3-8b-8192',           // fallback
+];
+
+async function callGroq(prompt) {
+    const key = process.env.GROQ_API_KEY;
+    if (!key) throw new Error('GROQ_API_KEY not set');
+
+    for (const model of GROQ_MODELS) {
+        try {
+            console.log(`🤖 [Groq] Trying ${model}...`);
+            const { data } = await axios.post(
+                'https://api.groq.com/openai/v1/chat/completions',
+                {
+                    model,
+                    messages:    [{ role: 'user', content: prompt }],
+                    temperature: 0.1,
+                    max_tokens:  1000
+                },
+                {
+                    headers: {
+                        Authorization:  `Bearer ${key}`,
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 30000
+                }
+            );
+            const content = data?.choices?.[0]?.message?.content;
+            if (!content) throw new Error('Empty content');
+            console.log(`✅ [Groq] ${model} succeeded.`);
+            return safeParseJSON(content);
+        } catch (err) {
+            const status = err.response?.status;
+            console.warn(`⚠️  [Groq] ${model} failed (${status ?? err.message.substring(0, 80)})`);
+            if (status === 429) {
+                // Groq 429 usually resets in seconds — wait and try next model
+                await new Promise(r => setTimeout(r, 3000));
+            }
+            // Continue to next Groq model
+        }
+    }
+    throw new Error('All Groq models failed');
+}
+
+// ─── OpenRouter API Call (axios) ──────────────────────────────────────────────
+async function callOpenRouter(modelId, prompt) {
+    const key = process.env.OPENROUTER_API_KEY;
+    if (!key) throw new Error('OPENROUTER_API_KEY not configured');
+
+    const doRequest = () => axios.post(
+        'https://openrouter.ai/api/v1/chat/completions',
+        {
+            model:       modelId,
+            messages:    [{ role: 'user', content: prompt }],
+            temperature: 0.1,
+            max_tokens:  1000
         },
-        body: JSON.stringify({
-            model: model,
-            messages: [{ role: 'user', content: prompt }],
-            temperature: 0.1
-        })
-    });
+        {
+            headers: {
+                Authorization:  `Bearer ${key}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': process.env.FRONTEND_URL || 'http://localhost:5173',
+                'X-Title':      'SmartHire AI'
+            },
+            timeout: 30000,
+            validateStatus: () => true // Don't throw on 4xx — handle manually
+        }
+    );
 
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Status ${response.status}: ${errText}`);
+    let res = await doRequest();
+
+    if (res.status === 429) {
+        const retryAfter = res.data?.error?.metadata?.retry_after_seconds ?? 10;
+        const waitMs     = Math.ceil(retryAfter) * 1000 + 500;
+        console.log(`⏳ [OpenRouter] ${modelId} → 429, waiting ${waitMs}ms...`);
+        await new Promise(r => setTimeout(r, waitMs));
+        res = await doRequest();
     }
 
-    const data = await response.json();
-    const content = data?.choices?.[0]?.message?.content;
-    if (!content) throw new Error('LLM returned empty content');
-    return content;
+    if (res.status === 404) {
+        _cachedFreeModels = null; // Invalidate cache — model gone
+        throw new Error(`404: model ${modelId} no longer exists on OpenRouter`);
+    }
+
+    if (res.status !== 200) {
+        throw new Error(`HTTP ${res.status}: ${JSON.stringify(res.data?.error ?? res.data).substring(0, 200)}`);
+    }
+
+    const content = res.data?.choices?.[0]?.message?.content;
+    if (!content) throw new Error('OpenRouter returned empty content');
+    return safeParseJSON(content);
 }
 
-// --- Fallback generator ---
-function generateOfflineFallback(errorMessage = "All AI services failed.") {
+// ─── Offline Fallback ─────────────────────────────────────────────────────────
+function generateOfflineFallback(reason = 'All AI providers unavailable.') {
     return {
-        matchScore: 50,
-        verdict: "Borderline",
-        summary: `AI Screening offline. Marked for manual review. (${errorMessage})`,
-        strengths: ["None (AI offline)"],
-        weaknesses: ["None (AI offline)"],
-        skills: {
-            matched: [],
-            missing: []
-        },
-        experienceMatch: "Meets",
-        recommendation: "review",
+        matchScore: 50, verdict: 'Borderline',
+        summary: `AI Screening offline — manual review required. (${reason})`,
+        strengths: [], weaknesses: [],
+        skills: { matched: [], missing: [] },
+        experienceMatch: 'Meets', recommendation: 'review',
         candidateProfile: {
-            name: "Candidate Profile",
-            email: null,
-            location: null,
-            totalExperienceYears: 0,
-            university: null,
-            availability: null
+            name: null, email: null, location: null,
+            totalExperienceYears: 0, university: null, availability: null
         },
-        skillProficiency: [],
-        employmentHistory: [],
-        aiNote: "AI Offline: pending manual review."
+        skillProficiency: [], employmentHistory: [],
+        aiNote: 'AI offline — awaiting manual review.'
     };
 }
 
-/**
- * Screens a resume against a job description using Gemini AI, with multi-LLM failover to OpenAI, OpenRouter, and Groq
- */
+// ─── Main: screenResume ───────────────────────────────────────────────────────
 async function screenResume(resumeText, jobDescription) {
-    const safeResumeText = cleanText(resumeText);
-    const safeJobDesc = cleanText(jobDescription);
+    const processedResume = preprocessText(resumeText,    MAX_RESUME_CHARS);
+    const processedJob    = preprocessText(jobDescription, MAX_JOB_CHARS);
+    const prompt          = buildPrompt(processedResume, processedJob);
+    let lastError;
 
-    const prompt = `
-Analyze this resume text against the job description.
----JOB DESCRIPTION---
-${safeJobDesc}
----RESUME---
-${safeResumeText}
+    // ── 1. Groq (Primary — best free option, globally accessible) ─────────────
+    if (process.env.GROQ_API_KEY) {
+        try {
+            return await callGroq(prompt);
+        } catch (err) {
+            lastError = err;
+            console.warn(`⚠️  [AI] Groq fully failed: ${err.message}`);
+        }
+    } else {
+        console.warn('⚠️  [AI] GROQ_API_KEY not set — add it to .env for best results');
+    }
 
-Output a single structured JSON object matching this schema:
-{
-  "matchScore": 0-100,
-  "verdict": "Highly Recommended | Recommended | Borderline | Not Recommended",
-  "summary": "2-3 sentence overall assessment",
-  "strengths": ["strength1", "strength2"],
-  "weaknesses": ["weakness1", "weakness2"],
-  "skills": {
-    "matched": ["skill1", "skill2"],
-    "missing": ["skill1", "skill2"]
-  },
-  "experienceMatch": "Exceeds | Meets | Below expectations",
-  "recommendation": "shortlist | reject | review",
-  "candidateProfile": {
-    "name": "full name or null",
-    "email": "email or null",
-    "location": "location or null",
-    "totalExperienceYears": number of years,
-    "university": "university name or null",
-    "availability": "availability or null"
-  },
-  "skillProficiency": [
-    { "skill": "skill", "level": "Beginner|Intermediate|Advanced|Expert", "percentage": 0-100 }
-  ],
-  "employmentHistory": [
-    { "company": "company", "role": "role", "duration": "duration", "description": "desc" }
-  ],
-  "aiNote": "1 sentence highlight"
-}
-Only return valid JSON. Do not include markdown codeblocks or extra text.
-`;
-
-    return enqueueTask(async () => {
-        let lastError;
-
-        // --- 1. PRIMARY: Gemini API ---
-        if (process.env.GEMINI_API_KEY) {
-            console.log(`🤖 LLM Flow: Trying PRIMARY (Gemini)...`);
-            const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-            for (let i = 0; i < 2; i++) {
-                try {
+    // ── 2. Direct Gemini (if key has quota and region allows) ─────────────────
+    if (process.env.GEMINI_API_KEY) {
+        for (const model of ['gemini-2.0-flash', 'gemini-2.0-flash-lite']) {
+            try {
+                const result = await scheduleGeminiCall(async () => {
+                    console.log(`🤖 [AI] Direct Gemini → ${model}...`);
+                    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
                     const response = await ai.models.generateContent({
-                        model: 'gemini-2.0-flash',
-                        contents: prompt,
+                        model, contents: prompt,
+                        config: { temperature: 0.1, maxOutputTokens: 1000 }
                     });
                     const text = response.text;
-                    const cleanJSON = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-                    return JSON.parse(cleanJSON);
-                } catch (err) {
-                    lastError = err;
-                    console.warn(`⚠️ Gemini Attempt ${i + 1} failed: ${err.message}`);
-                    if (i === 0 && (err.message.includes('429') || err.message.includes('RESOURCE_EXHAUSTED') || err.message.includes('503'))) {
-                        await new Promise(r => setTimeout(r, 4000)); // wait 4 seconds before retry
-                    }
+                    if (!text) throw new Error('empty response');
+                    return safeParseJSON(text);
+                });
+                console.log(`✅ [AI] Gemini ${model} succeeded.`);
+                return result;
+            } catch (err) {
+                lastError = err;
+                const isZeroQuota = /limit[\":\s]+0/i.test(err.message);
+                const isNotFound  = /404|NOT_FOUND/i.test(err.message);
+                const isFetch     = /fetch failed|ECONNREFUSED|ENOTFOUND|network/i.test(err.message);
+                console.warn(`⚠️  [AI] Gemini ${model}: ${err.message.substring(0, 120)}`);
+                if (isZeroQuota || isNotFound || isFetch) {
+                    console.warn('🚫 [AI] Gemini skipped (quota/region/network block).');
+                    break;
+                }
+                if (/429|RESOURCE_EXHAUSTED/i.test(err.message)) {
+                    await new Promise(r => setTimeout(r, 8000));
                 }
             }
         }
+    }
 
-        // --- 2. BACKUP 1: OpenAI API ---
-        if (process.env.OPENAI_API_KEY) {
-            console.log(`🤖 Failover: Trying BACKUP 1 (OpenAI)...`);
+    // ── 3. OpenRouter fallbacks (dynamically discovered) ─────────────────────
+    if (process.env.OPENROUTER_API_KEY) {
+        const models = await discoverFreeModels();
+        for (const modelId of models) {
             try {
-                const resultText = await callOpenAICompatible(
-                    'https://api.openai.com/v1/chat/completions',
-                    process.env.OPENAI_API_KEY,
-                    'gpt-4o-mini',
-                    prompt
-                );
-                const cleanJSON = resultText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-                return JSON.parse(cleanJSON);
+                console.log(`🤖 [AI] OpenRouter → ${modelId}...`);
+                const result = await callOpenRouter(modelId, prompt);
+                console.log(`✅ [AI] OpenRouter ${modelId} succeeded.`);
+                return result;
             } catch (err) {
                 lastError = err;
-                console.warn(`⚠️ OpenAI backup failed: ${err.message}`);
+                console.warn(`⚠️  [AI] OpenRouter ${modelId}: ${err.message.substring(0, 120)}`);
             }
         }
+    }
 
-        // --- 3. BACKUP 2: OpenRouter ---
-        if (process.env.OPENROUTER_API_KEY) {
-            console.log(`🤖 Failover: Trying BACKUP 2 (OpenRouter)...`);
-            try {
-                const resultText = await callOpenAICompatible(
-                    'https://openrouter.ai/api/v1/chat/completions',
-                    process.env.OPENROUTER_API_KEY,
-                    'google/gemini-2.0-flash-lite:free',
-                    prompt
-                );
-                const cleanJSON = resultText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-                return JSON.parse(cleanJSON);
-            } catch (err) {
-                lastError = err;
-                console.warn(`⚠️ OpenRouter backup failed: ${err.message}`);
-            }
-        }
-
-        // --- 4. BACKUP 3: OpenRouter (secondary model — Llama 3.1 8B free) ---
-        if (process.env.OPENROUTER_API_KEY) {
-            console.log(`🤖 Failover: Trying BACKUP 3 (OpenRouter Llama-3.1-8B)...`);
-            try {
-                const resultText = await callOpenAICompatible(
-                    'https://openrouter.ai/api/v1/chat/completions',
-                    process.env.OPENROUTER_API_KEY,
-                    'meta-llama/llama-3.1-8b-instruct:free',
-                    prompt
-                );
-                const cleanJSON = resultText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-                return JSON.parse(cleanJSON);
-            } catch (err) {
-                lastError = err;
-                console.warn(`⚠️ OpenRouter Backup 3 failed: ${err.message}`);
-            }
-        }
-
-        // --- 5. ALL FAILURES: Return Caching Fallback Response ---
-        console.error(`❌ ALL LLM providers failed. Returning fallback offline result. Last error:`, lastError?.message);
-        return generateOfflineFallback(lastError?.message);
-    });
+    // ── 4. All failed ─────────────────────────────────────────────────────────
+    console.error(`❌ [AI] All providers exhausted. Last: ${lastError?.message?.substring(0, 200)}`);
+    return generateOfflineFallback(lastError?.message?.substring(0, 200));
 }
 
 module.exports = { screenResume, cleanText };

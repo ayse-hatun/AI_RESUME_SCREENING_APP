@@ -14,7 +14,8 @@ const {
 const applyRateLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10,
-    message: { success: false, error: 'Too many applications from this IP, please try again after 15 minutes' }
+    message: { success: false, error: 'Too many applications from this IP, please try again after 15 minutes' },
+    validate: { trustProxy: false }
 });
 
 // Multer error handling wrapper

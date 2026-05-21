@@ -238,46 +238,43 @@ async function bulkScreenResumeHandler(req, res) {
 
         console.log(`✅ ${resumeIds.length} records created. Queueing sequential processing...`);
 
-        // 3️⃣ Parallel Background Processor (10 at a time)
-        // Process all resumes simultaneously to maximize throughput and eliminate queue wait times
-        const BATCH_SIZE = 10;
-        const runParallelBatches = async () => {
+        // 3️⃣ Sequential Background Processor
+        // Resumes are processed ONE AT A TIME. The AI service already enforces
+        // a 4.5 s gap between Gemini calls — running in parallel would just cause
+        // all calls to queue up inside the service anyway, burning concurrency
+        // overhead and making rate-limit collisions more likely.
+        const runSequential = async () => {
             const totalStart = Date.now();
-            for (let i = 0; i < tasks.length; i += BATCH_SIZE) {
-                const batch = tasks.slice(i, i + BATCH_SIZE);
-                console.log(`🔄 Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(tasks.length / BATCH_SIZE)}: [${batch.map(t => t.name).join(', ')}]`);
+            console.log(`🔄 [Bulk] Starting sequential processing of ${tasks.length} resume(s)...`);
 
-                // Process batch in parallel
-                await Promise.allSettled(
-                    batch.map(task =>
-                        processResumeBackground(
-                            task.id,
-                            task.fileExt,
-                            task.path,
-                            task.name,
-                            task.email,
-                            targetJobTitle,
-                            targetJobDesc,
-                            jobId,
-                            autoRejectionEnabled,
-                            autoRejectionThreshold
-                        ).catch(err => {
-                            console.error(`❌ Processing failed for ${task.id}:`, err.message);
-                        })
-                    )
-                );
-
-                // Small cooldown between batches to avoid rate limiting
-                if (i + BATCH_SIZE < tasks.length) {
-                    await new Promise(r => setTimeout(r, 500));
+            for (let i = 0; i < tasks.length; i++) {
+                const task = tasks[i];
+                console.log(`📄 [Bulk] Processing ${i + 1}/${tasks.length}: ${task.name}`);
+                try {
+                    await processResumeBackground(
+                        task.id,
+                        task.fileExt,
+                        task.path,
+                        task.name,
+                        task.email,
+                        targetJobTitle,
+                        targetJobDesc,
+                        jobId,
+                        autoRejectionEnabled,
+                        autoRejectionThreshold
+                    );
+                } catch (err) {
+                    console.error(`❌ [Bulk] Failed for ${task.id} (${task.name}):`, err.message);
+                    // Continue with next resume — one failure must not stop the batch
                 }
             }
+
             const totalTime = ((Date.now() - totalStart) / 1000).toFixed(1);
-            console.log(`🏁 Bulk processing complete for Job ${jobId} — ${tasks.length} resumes in ${totalTime}s`);
+            console.log(`🏁 [Bulk] Complete — ${tasks.length} resume(s) in ${totalTime}s`);
         };
 
-        // Start the queue on next tick
-        setTimeout(runParallelBatches, 100);
+        // Kick off on next tick so the HTTP 202 response is sent first
+        setTimeout(runSequential, 100);
 
         res.status(202).json({
             success: true,

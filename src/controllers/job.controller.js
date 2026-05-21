@@ -11,7 +11,7 @@ const Resume = require('../models/resume.model');
  */
 exports.createJob = async (req, res) => {
     try {
-        const { title, description, requiredSkills, experienceYears, department, location, educationLevel, workType, salaryRange } = req.body;
+        const { title, description, requiredSkills, experienceYears, department, location, educationLevel, workType, salaryRange, autoRejectionEnabled, autoRejectionThreshold } = req.body;
         
         const job = new Job({
             title,
@@ -23,6 +23,8 @@ exports.createJob = async (req, res) => {
             educationLevel,
             workType,
             salaryRange,
+            autoRejectionEnabled,
+            autoRejectionThreshold,
             createdBy: req.user._id
         });
 

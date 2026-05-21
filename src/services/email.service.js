@@ -122,31 +122,35 @@ async function verifyEmailConnection() {
 /**
  * Sends a status update email (e.g., shortlisted, rejected)
  */
-async function sendStatusUpdateEmail(toEmail, candidateName, jobTitle, stage, shortReason = '') {
+async function sendStatusUpdateEmail(toEmail, candidateName, jobTitle, stage, _shortReason = '') {
     let subject = '';
     let message = '';
     let headerColor = '';
+    let headerText = '';
 
     if (stage === 'shortlisted') {
         subject = `Congratulations! You've been Shortlisted for ${escapeHtml(jobTitle)}`;
-        headerColor = '#08544A'; // Brand Green
-        message = `<p>Dear ${escapeHtml(candidateName)},</p>
-                   <p>We have great news! Your application for the <strong>${escapeHtml(jobTitle)}</strong> position has been reviewed, and we are pleased to inform you that you have been shortlisted for the next round.</p>
-                   ${shortReason ? `<p><strong>Decision Details:</strong> ${escapeHtml(shortReason)}</p>` : ''}
-                   <p>Our recruitment team will contact you shortly with the next steps.</p>`;
+        headerColor = 'linear-gradient(135deg, #08544A, #32BB32)'; // Brand Green Gradient
+        headerText = 'Great News!';
+        message = `<p>Hi <span class="highlight">${escapeHtml(candidateName)}</span>,</p>
+                   <p>Thank you so much for taking the time to apply for the <strong>${escapeHtml(jobTitle)}</strong> position.</p>
+                   <p>We are delighted to inform you that your profile stood out to us, and you have been <strong>shortlisted</strong> for the next round! Our recruitment team is very excited about your potential and will be reaching out to you shortly with details regarding the next steps.</p>
+                   <p>We appreciate your patience and look forward to connecting with you soon.</p>`;
     } else if (stage === 'rejected') {
         subject = `Update on your application for ${escapeHtml(jobTitle)}`;
-        headerColor = '#ef4444'; // Red
-        message = `<p>Dear ${escapeHtml(candidateName)},</p>
-                   <p>Thank you for applying for the <strong>${escapeHtml(jobTitle)}</strong> position. After careful consideration, we regret to inform you that we will not be moving forward with your application at this time.</p>
-                   ${shortReason ? `<p><strong>Decision Details:</strong> ${escapeHtml(shortReason)}</p>` : ''}
-                   <p>We appreciate your interest and wish you the best in your job search.</p>`;
+        headerColor = 'linear-gradient(135deg, #475569, #1e293b)'; // Slate Gray Gradient
+        headerText = 'Application Update';
+        message = `<p>Hi <span class="highlight">${escapeHtml(candidateName)}</span>,</p>
+                   <p>Thank you very much for applying for the <strong>${escapeHtml(jobTitle)}</strong> position and for your interest in joining our team.</p>
+                   <p>While we were impressed by your background, we regret to inform you that we will not be moving forward with your application at this time. We receive many strong applications, and making these decisions is never easy.</p>
+                   <p>We sincerely appreciate the time and effort you put into your application, and we wish you absolute best in your future career endeavors.</p>`;
     } else if (stage === 'applied') {
         subject = `Application Received: ${escapeHtml(jobTitle)}`;
-        headerColor = '#3b82f6'; // Blue
-        message = `<p>Dear ${escapeHtml(candidateName)},</p>
+        headerColor = 'linear-gradient(135deg, #3b82f6, #2563eb)'; // Blue Gradient
+        headerText = 'Application Received';
+        message = `<p>Hi <span class="highlight">${escapeHtml(candidateName)}</span>,</p>
                    <p>This is to confirm that we have successfully received your application for the <strong>${escapeHtml(jobTitle)}</strong> position.</p>
-                   <p>Our team will review your profile and get back to you soon.</p>`;
+                   <p>Our team is currently reviewing your profile and will get back to you as soon as possible.</p>`;
     } else {
         console.warn(`⚠️ Unknown email stage: ${stage}`);
         throw new Error(`Unknown email stage: ${stage}`);
@@ -158,25 +162,29 @@ async function sendStatusUpdateEmail(toEmail, candidateName, jobTitle, stage, sh
 <head>
   <meta charset="UTF-8">
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f1f5f9; margin: 0; padding: 20px; }
-    .container { max-width: 620px; margin: auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
-    .header { background: ${headerColor}; padding: 32px; text-align: center; color: white; }
-    .header h1 { margin: 0; font-size: 22px; }
-    .body { padding: 28px 32px; color: #475569; font-size: 15px; line-height: 1.6; }
-    .footer { text-align: center; padding: 20px; background: #f8fafc; color: #94a3b8; font-size: 12px; border-top: 1px solid #e2e8f0; }
+    body { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 40px 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+    .header { background: ${headerColor}; padding: 40px 32px; text-align: center; color: white; }
+    .header h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+    .body { padding: 40px 36px; color: #334155; font-size: 16px; line-height: 1.7; }
+    .body p { margin-top: 0; margin-bottom: 20px; }
+    .highlight { font-weight: 600; color: #0f172a; }
+    .divider { height: 1px; background-color: #e2e8f0; margin: 30px 0; border: none; }
+    .footer { text-align: center; padding: 24px; background: #f8fafc; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>Application Update</h1>
+      <h1>${headerText}</h1>
     </div>
     <div class="body">
       ${message}
-      <p>Best regards,<br>The Hiring Team</p>
+      <hr class="divider">
+      <p style="margin-bottom: 0;">Warm regards,<br><span class="highlight">The Hiring Team</span></p>
     </div>
     <div class="footer">
-      This is an automated message from AI Resume Screener.
+      This is an automated notification. Please do not reply directly to this email.
     </div>
   </div>
 </body>
