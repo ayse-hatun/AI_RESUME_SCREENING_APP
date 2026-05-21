@@ -20,11 +20,19 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['framer-motion', 'lucide-react'],
-          'pdf-vendor': ['pdfjs-dist'],
-          'utils-vendor': ['axios'],
+        manualChunks(id) {
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom')) {
+            return 'react-vendor';
+          }
+          if (id.includes('node_modules/framer-motion') || id.includes('node_modules/lucide-react')) {
+            return 'ui-vendor';
+          }
+          if (id.includes('node_modules/pdfjs-dist')) {
+            return 'pdf-vendor';
+          }
+          if (id.includes('node_modules/axios')) {
+            return 'utils-vendor';
+          }
         },
       },
     },
