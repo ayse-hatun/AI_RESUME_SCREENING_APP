@@ -20,6 +20,28 @@ if (
     app.set('trust proxy', 1);
 }
 
+// ─── CORS — MUST be first so error responses (429, 408) also carry CORS headers ──
+// Without this, rate-limit and timeout errors appear as CORS failures in the browser.
+const allowedOrigins = [
+    /^https?:\/\/localhost(:\d+)?$/,     // Any localhost port (dev)
+    /^https?:\/\/127\.0\.0\.1(:\d+)?$/,  // 127.0.0.1 dev
+    process.env.FRONTEND_URL,             // e.g. https://smarthire-rust.vercel.app
+    /^https:\/\/.*\.vercel\.app$/        // Any Vercel preview deployment
+].filter(Boolean);
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, Postman)
+        if (!origin) return callback(null, true);
+        const isAllowed = allowedOrigins.some(o =>
+            typeof o === 'string' ? o === origin : o.test(origin)
+        );
+        if (isAllowed) return callback(null, true);
+        callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
+    credentials: true
+}));
+
 // Set global timeout (2 minutes for bulk uploads)
 const serverTimeout = 120000;
 app.use((req, res, next) => {
@@ -43,28 +65,6 @@ const limiter = rateLimit({
     validate: { trustProxy: false } // Suppress false-positive proxy warning; trust proxy set above
 });
 app.use('/api/', limiter);
-
-// ─── CORS ─────────────────────────────────────────────────────────────────────
-// Allow localhost in dev + the deployed Vercel URL in production (set FRONTEND_URL in Render env vars)
-const allowedOrigins = [
-    /^https?:\/\/localhost(:\d+)?$/,     // Any localhost port (dev)
-    /^https?:\/\/127\.0\.0\.1(:\d+)?$/,  // 127.0.0.1 dev
-    process.env.FRONTEND_URL,             // e.g. https://your-app.vercel.app
-    /^https:\/\/.*\.vercel\.app$/        // Any Vercel preview deployment
-].filter(Boolean);
-
-app.use(cors({
-    origin: (origin, callback) => {
-        // Allow requests with no origin (mobile apps, curl, Postman)
-        if (!origin) return callback(null, true);
-        const isAllowed = allowedOrigins.some(o =>
-            typeof o === 'string' ? o === origin : o.test(origin)
-        );
-        if (isAllowed) return callback(null, true);
-        callback(new Error(`CORS: origin ${origin} not allowed`));
-    },
-    credentials: true
-}));
 
 // ─── Middleware ────────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '1mb' }));                // Parse JSON request bodies (max 1mb)
