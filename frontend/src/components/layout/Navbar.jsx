@@ -85,24 +85,14 @@ const Navbar = ({ isOpen = true, onMouseEnter, onMouseLeave }) => {
       className={`w-64 bg-[#08544A] h-screen fixed left-0 top-0 flex flex-col p-6 z-40 transition-transform duration-200 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
     >
       {/* Brand */}
-      <div className="flex items-center justify-between px-2 mb-12">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-transparent overflow-hidden">
-            <img src="/logo.png" alt="SmartHire Logo" className="w-full h-full object-contain" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-white tracking-tight">SmartHire</h1>
-            <p className="text-[10px] text-accent-secondary font-black uppercase tracking-widest whitespace-nowrap">AI Platform</p>
-          </div>
+      <div className="flex items-center gap-3 mb-12 px-2">
+        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-transparent overflow-hidden shrink-0">
+          <img src="/logo.png" alt="SmartHire Logo" className="w-full h-full object-contain" />
         </div>
-        
-        <button 
-          onClick={toggleTheme}
-          className="p-2 ml-4 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors shrink-0"
-          title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-        >
-          {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
+        <div>
+          <h1 className="text-xl font-bold text-white tracking-tight">SmartHire</h1>
+          <p className="text-[10px] text-accent-secondary font-black uppercase tracking-widest whitespace-nowrap">Talent Platform</p>
+        </div>
       </div>
 
       {/* Main Nav */}
@@ -130,7 +120,18 @@ const Navbar = ({ isOpen = true, onMouseEnter, onMouseLeave }) => {
         </a>
       </div>
 
-      <div className="mt-auto pt-4 border-t border-white/10">
+      <div className="mt-auto pt-4 border-t border-white/10 space-y-2">
+        {/* Theme Toggle */}
+        <button 
+          onClick={toggleTheme}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/5 transition-all group"
+          title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {isDarkMode ? <Sun size={20} className="group-hover:rotate-45 transition-transform duration-300 shrink-0" /> : <Moon size={20} className="group-hover:-rotate-12 transition-transform duration-300 shrink-0" />}
+          <span className="font-bold text-sm">{isDarkMode ? "Light Mode" : "Dark Mode"}</span>
+        </button>
+
+        {/* Profile */}
         <NavLink 
           to="/app/profile"
           className={({ isActive }) => 
@@ -151,7 +152,7 @@ const Navbar = ({ isOpen = true, onMouseEnter, onMouseLeave }) => {
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:text-accent-danger hover:bg-white/5 transition-all group"
         >
-          <LogOut size={20} className="group-hover:-translate-x-1 transition-transform" />
+          <LogOut size={20} className="group-hover:-translate-x-1 transition-transform shrink-0" />
           <span className="font-bold text-sm">Sign Out</span>
         </button>
       </div>

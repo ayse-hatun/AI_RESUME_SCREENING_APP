@@ -164,10 +164,11 @@ const Login = () => {
                     type="email"
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
-                    className="input-field w-full pl-12"
+                    className={`input-field w-full pl-12 ${email ? 'opacity-60 cursor-not-allowed select-none' : ''}`}
                     placeholder="name@company.com"
                     required
-                    autoFocus
+                    readOnly={!!email}
+                    autoFocus={!email}
                   />
                 </div>
               </div>

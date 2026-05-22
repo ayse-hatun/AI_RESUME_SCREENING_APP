@@ -35,7 +35,7 @@ const LandingNav = ({ isDark, toggleTheme }) => {
           </div>
           <div>
             <span className="text-lg font-black text-text-primary tracking-tight">SmartHire</span>
-            <span className="text-[9px] text-accent-primary font-black uppercase tracking-widest block leading-none whitespace-nowrap">AI Platform</span>
+            <span className="text-[9px] text-emerald-500 dark:text-emerald-400 font-black uppercase tracking-widest block leading-none whitespace-nowrap">Talent Platform</span>
           </div>
         </Link>
 
@@ -338,18 +338,17 @@ const Landing = () => {
               <div className="absolute bottom-12 right-20 w-80 h-80 rounded-full bg-blue-500/20 dark:bg-blue-500/15 blur-[100px] animate-pulse" style={{ animationDelay: '3s' }} />
             </div>
 
-            {/* Badge */}
+            {/* Modern Status Badge */}
             <motion.div
               variants={itemVariants}
-              className="flex items-center gap-3 mb-6 cursor-default select-none"
+              className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[#f8fafc] dark:bg-[#090b11] border border-emerald-500/20 dark:border-emerald-500/15 mb-6 cursor-default select-none shadow-sm z-20"
             >
-              <div className="flex items-center gap-1.5">
-                <div className="w-5 h-[2px] rounded-full bg-accent-primary" />
-                <div className="w-2 h-[2px] rounded-full bg-accent-primary/40" />
-              </div>
-              <span className="text-[11px] font-black uppercase tracking-[0.2em] text-accent-primary flex items-center gap-1.5">
-                <Sparkles size={11} className="opacity-80" />
-                AI-Powered Recruitment Platform
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">
+                Intelligent Hiring Infrastructure
               </span>
             </motion.div>
 
@@ -375,7 +374,7 @@ const Landing = () => {
               variants={itemVariants}
               className="text-lg md:text-xl text-text-secondary max-w-xl leading-relaxed mb-8 font-medium"
             >
-              SmartHire uses <span className="text-text-primary font-bold">Groq AI</span> to rank resumes with 95% accuracy, so you can stop filtering and start hiring your dream team in minutes.
+              SmartHire uses <span className="text-text-primary font-bold">advanced reasoning models</span> to score resumes with 95% accuracy, so you can skip the manual screening and start interviewing top candidates in minutes.
             </motion.p>
 
             {/* Direct signup inline form or simple premium CTA button group */}
@@ -595,10 +594,11 @@ const Landing = () => {
       >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="w-6 h-[2px] rounded-full bg-accent-primary" />
-              <span className="text-[11px] font-black uppercase tracking-[0.18em] text-accent-primary">Features</span>
-              <div className="w-6 h-[2px] rounded-full bg-accent-primary" />
+            <div className="flex justify-center mb-4">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white dark:bg-[#0f172a] border border-accent-primary/20 shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent-primary" />
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-accent-primary">Features</span>
+              </div>
             </div>
             <h2 className="text-4xl font-black text-text-primary mb-4">Everything you need to hire better</h2>
             <p className="text-text-secondary text-lg max-w-2xl mx-auto">From resume parsing to pipeline management — SmartHire handles the entire hiring workflow so your team doesn't have to.</p>
@@ -620,9 +620,11 @@ const Landing = () => {
       >
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
           <div>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-6 h-[2px] rounded-full bg-accent-secondary" />
-              <span className="text-[11px] font-black uppercase tracking-[0.18em] text-accent-secondary">How It Works</span>
+            <div className="flex mb-6">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white dark:bg-[#0f172a] border border-accent-secondary/20 shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent-secondary" />
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-accent-secondary">How It Works</span>
+              </div>
             </div>
             <h2 className="text-4xl font-black text-text-primary mb-4">From job post to hired in days, not months.</h2>
             <p className="text-text-secondary mb-10 leading-relaxed">SmartHire automates the heaviest part of recruiting — the initial screening — and hands you a prioritized shortlist before your morning coffee.</p>
@@ -681,10 +683,11 @@ const Landing = () => {
       >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16 animate-slide-up">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="w-6 h-[2px] rounded-full bg-accent-primary" />
-              <span className="text-[11px] font-black uppercase tracking-[0.18em] text-accent-primary">Pricing</span>
-              <div className="w-6 h-[2px] rounded-full bg-accent-primary" />
+            <div className="flex justify-center mb-4">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white dark:bg-[#0f172a] border border-accent-primary/20 shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent-primary" />
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-accent-primary">Pricing</span>
+              </div>
             </div>
             <h2 className="text-4xl font-black text-text-primary mb-4">Simple, transparent pricing</h2>
             <p className="text-text-secondary text-lg max-w-2xl mx-auto">Start for free. Upgrade when your team grows.</p>
@@ -746,17 +749,18 @@ const Landing = () => {
         className="py-24 px-6 bg-card/20 border-t border-border"
       >
         <div className="max-w-4xl mx-auto text-center animate-slide-up">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="w-6 h-[2px] rounded-full bg-accent-secondary" />
-            <span className="text-[11px] font-black uppercase tracking-[0.18em] text-accent-secondary">About Us</span>
-            <div className="w-6 h-[2px] rounded-full bg-accent-secondary" />
+          <div className="flex justify-center mb-6">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white dark:bg-[#0f172a] border border-accent-secondary/20 shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent-secondary" />
+              <span className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-accent-secondary">About Us</span>
+            </div>
           </div>
           <h2 className="text-3xl md:text-5xl font-black text-text-primary mb-8 leading-tight">Built by recruiters,<br/>powered by AI.</h2>
           <p className="text-lg text-text-secondary leading-relaxed mb-8">
             SmartHire was founded in 2026 with a simple mission: to eliminate the soul-crushing work of reading thousands of unqualified resumes, so recruiters can get back to what matters — talking to great people.
           </p>
           <p className="text-lg text-text-secondary leading-relaxed mb-12">
-            By leveraging the cutting-edge reasoning capabilities of Groq AI, we've built a system that understands context, skills, and potential just like a human recruiter does — but infinitely faster.
+            By using smart, high-accuracy reasoning models, we've built a system that understands skills, experience, and potential just like a human recruiter does — but in seconds instead of hours.
           </p>
           <div className="flex justify-center">
             <div className="w-16 h-1 bg-accent-primary/20 rounded-full"></div>
@@ -774,10 +778,11 @@ const Landing = () => {
       >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="w-6 h-[2px] rounded-full bg-accent-primary" />
-              <span className="text-[11px] font-black uppercase tracking-[0.18em] text-accent-primary">Success Stories</span>
-              <div className="w-6 h-[2px] rounded-full bg-accent-primary" />
+            <div className="flex justify-center mb-4">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white dark:bg-[#0f172a] border border-accent-primary/20 shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent-primary" />
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-accent-primary">Success Stories</span>
+              </div>
             </div>
             <h2 className="text-4xl font-black text-text-primary mb-4">Trusted by the world's best hiring teams</h2>
           </div>
@@ -874,11 +879,11 @@ const Landing = () => {
                 </div>
                 <div>
                   <span className="text-lg font-black text-text-primary">SmartHire</span>
-                  <span className="text-[9px] text-accent-primary font-black uppercase tracking-widest block leading-none">AI Platform</span>
+                  <span className="text-[9px] text-emerald-500 dark:text-emerald-400 font-black uppercase tracking-widest block leading-none">Talent Platform</span>
                 </div>
               </div>
               <p className="text-text-muted text-sm leading-relaxed max-w-xs">
-                The AI-powered recruitment platform that helps teams hire the right people, faster.
+                The modern recruitment infrastructure that helps teams hire the right people, faster.
               </p>
               <div className="flex gap-3">
                 {[Globe].map((Icon, i) => (

@@ -289,17 +289,22 @@ exports.forgotPassword = async (req, res) => {
         const originUrl = origins.find(o => o.includes('5173')) || origins[0];
         const resetUrl = `${originUrl}/reset-password/${resetToken}`;
 
-        try {
-            await sendPasswordResetEmail(user.email, user.name, resetUrl);
-            return res.status(200).json({ success: true, message: 'Reset link sent to email' });
-        } catch (emailErr) {
-            console.error('❌ Password reset email failed:', emailErr.message);
-            // Clear the token so it can be re-requested
-            await User.findByIdAndUpdate(user._id, {
-                $unset: { resetPasswordToken: 1, resetPasswordExpires: 1 }
+        // Send email in the background to respond immediately (within milliseconds)
+        sendPasswordResetEmail(user.email, user.name, resetUrl)
+            .catch(async (emailErr) => {
+                console.error('❌ Background password reset email failed:', emailErr.message);
+                // Clear the token so it can be re-requested since email delivery failed
+                try {
+                    await User.findByIdAndUpdate(user._id, {
+                        $unset: { resetPasswordToken: 1, resetPasswordExpires: 1 }
+                    });
+                } catch (dbErr) {
+                    console.error('❌ Failed to clear reset token after email failure:', dbErr.message);
+                }
             });
-            return res.status(503).json({ success: false, error: 'Could not send the reset email. Please try again in a few minutes.' });
-        }
+
+        // Respond immediately without waiting for the slow SMTP server handshake
+        return res.status(200).json({ success: true, message: 'Reset link sent to email' });
     } catch (error) {
         console.error('❌ Forgot Password Error:', error.message, error.stack);
         res.status(500).json({ success: false, error: `Password reset failed: ${error.message}` });
