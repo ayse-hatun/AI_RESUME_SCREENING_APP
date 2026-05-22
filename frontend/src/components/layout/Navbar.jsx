@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Briefcase, 
-  Users, 
-  Settings as SettingsIcon, 
-  HelpCircle, 
+import {
+  LayoutDashboard,
+  Briefcase,
+  Users,
+  Settings as SettingsIcon,
+  HelpCircle,
   LogOut,
   ShieldCheck,
   PieChart,
@@ -17,26 +17,24 @@ import {
 const NavItem = ({ to, icon: Icon, label }) => {
   const isDashboard = to === '/app';
   return (
-    <NavLink 
-      to={to} 
+    <NavLink
+      to={to}
       end={isDashboard}
-      className={({ isActive }) => 
-        `relative overflow-hidden flex items-center gap-3 px-5 py-3 rounded-xl transition-all duration-300 group ${
-          isActive 
-            ? 'bg-white/10 text-white shadow-lg shadow-white/5' 
-            : 'text-white/70 hover:bg-white/5 hover:text-white'
+      className={({ isActive }) =>
+        `relative overflow-hidden flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-300 group ${isActive
+          ? 'bg-white/10 text-white shadow-lg shadow-white/5'
+          : 'text-white/70 hover:bg-white/5 hover:text-white'
         }`
       }
     >
       {({ isActive }) => (
         <>
           {/* Glowing left border */}
-          <div className={`absolute top-0 left-0 bottom-0 w-1 bg-accent-secondary shadow-[0_0_20px_2px] shadow-accent-secondary/60 transition-opacity duration-300 ${
-            isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'
-          }`}></div>
-          
-          <Icon size={20} className="group-hover:scale-110 transition-transform z-10 relative" />
-          <span className="font-medium z-10 relative">{label}</span>
+          <div className={`absolute top-0 left-0 bottom-0 w-1 bg-accent-secondary shadow-[0_0_20px_2px] shadow-accent-secondary/60 transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'
+            }`}></div>
+
+          <Icon size={20} className="group-hover:scale-110 transition-transform z-10 relative shrink-0" />
+          <span className="font-medium text-sm z-10 relative">{label}</span>
         </>
       )}
     </NavLink>
@@ -79,52 +77,52 @@ const Navbar = ({ isOpen = true, onMouseEnter, onMouseLeave }) => {
   };
 
   return (
-    <nav 
+    <nav
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={`w-64 bg-[#08544A] h-screen fixed left-0 top-0 flex flex-col p-6 z-40 transition-transform duration-200 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      className={`w-64 bg-[#08544A] h-screen fixed left-0 top-0 flex flex-col p-4 z-40 transition-transform duration-200 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
     >
       {/* Brand */}
-      <div className="flex items-center gap-3 mb-12 px-2">
-        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-transparent overflow-hidden shrink-0">
+      <div className="flex items-center gap-2 mb-6 px-1">
+        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-transparent overflow-hidden shrink-0">
           <img src="/logo.png" alt="SmartHire Logo" className="w-full h-full object-contain" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-white tracking-tight">SmartHire</h1>
-          <p className="text-[10px] text-accent-secondary font-black uppercase tracking-widest whitespace-nowrap">Talent Platform</p>
+          <h1 className="text-lg font-bold text-white tracking-tight leading-tight">SmartHire</h1>
+          <p className="text-[9px] text-accent-secondary font-black uppercase tracking-widest whitespace-nowrap">Talent Platform</p>
         </div>
       </div>
 
       {/* Main Nav */}
-      <div className="space-y-2 flex-1">
-        <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest px-4 mb-2">Main Menu</p>
+      <div className="space-y-1.5 flex-1">
+        <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest px-4 mb-1.5">Main Menu</p>
         <NavItem to="/app" icon={LayoutDashboard} label="Dashboard" />
         <NavItem to="/app/jobs" icon={Briefcase} label="Job Pipelines" />
         <NavItem to="/app/candidates" icon={Users} label="Candidates" />
         <NavItem to="/app/analytics" icon={PieChart} label="Analytics" />
-        
-        <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest px-4 mt-10 mb-2">System</p>
+
+        <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest px-4 mt-6 mb-1.5">System</p>
         <NavItem to="/app/settings" icon={SettingsIcon} label="Settings" />
         <NavItem to="/documentation" icon={HelpCircle} label="Documentation" />
-        
-        <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest px-4 mt-10 mb-2">Public Info</p>
-        <a 
-          href={user?._id || user?.id ? `/careers/${user._id || user.id}` : "/careers"} 
-          target="_blank" 
+
+        <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest px-4 mt-6 mb-1.5">Public Info</p>
+        <a
+          href={user?._id || user?.id ? `/careers/${user._id || user.id}` : "/careers"}
+          target="_blank"
           rel="noopener noreferrer"
-          className="relative overflow-hidden flex items-center gap-3 px-5 py-3 rounded-xl transition-all duration-300 group text-white/70 hover:bg-white/5 hover:text-white"
+          className="relative overflow-hidden flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-300 group text-white/70 hover:bg-white/5 hover:text-white"
         >
           <div className="absolute top-0 left-0 bottom-0 w-1 bg-accent-secondary opacity-0 group-hover:opacity-40 transition-opacity duration-300"></div>
-          <Globe size={20} className="group-hover:scale-110 transition-transform z-10 relative" />
-          <span className="font-medium z-10 relative">Careers Page</span>
+          <Globe size={20} className="group-hover:scale-110 transition-transform z-10 relative shrink-0" />
+          <span className="font-medium text-sm z-10 relative">Careers Page</span>
         </a>
       </div>
 
-      <div className="mt-auto pt-4 border-t border-white/10 space-y-2">
+      <div className="mt-auto pt-3 border-t border-white/10 space-y-1.5">
         {/* Theme Toggle */}
-        <button 
+        <button
           onClick={toggleTheme}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/5 transition-all group"
+          className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-white/70 hover:text-white hover:bg-white/5 transition-all group"
           title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
         >
           {isDarkMode ? <Sun size={20} className="group-hover:rotate-45 transition-transform duration-300 shrink-0" /> : <Moon size={20} className="group-hover:-rotate-12 transition-transform duration-300 shrink-0" />}
@@ -132,25 +130,24 @@ const Navbar = ({ isOpen = true, onMouseEnter, onMouseLeave }) => {
         </button>
 
         {/* Profile */}
-        <NavLink 
+        <NavLink
           to="/app/profile"
-          className={({ isActive }) => 
-            `flex items-center gap-3 px-2 mb-2 py-2 rounded-xl transition-all group ${
-              isActive ? 'bg-white/10 text-white' : 'hover:bg-white/5'
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-2 py-1.5 rounded-xl transition-all group ${isActive ? 'bg-white/10 text-white' : 'hover:bg-white/5'
             }`
           }
         >
-          <div className="w-10 h-10 bg-gradient-to-br from-accent-primary to-accent-secondary rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg group-hover:scale-105 transition-transform shrink-0">
+          <div className="w-9 h-9 bg-gradient-to-br from-accent-primary to-accent-secondary rounded-full flex items-center justify-center text-white font-bold text-xs shadow-lg group-hover:scale-105 transition-transform shrink-0">
             {user.name.charAt(0)}
           </div>
           <div className="overflow-hidden">
-            <p className="text-sm font-bold text-white truncate group-hover:text-accent-secondary transition-colors">{user.name}</p>
-            <p className="text-[10px] text-white/50 uppercase font-bold tracking-tighter">{user.role}</p>
+            <p className="text-xs font-bold text-white truncate group-hover:text-accent-secondary transition-colors">{user.name}</p>
+            <p className="text-[9px] text-white/50 uppercase font-bold tracking-tighter">{user.role}</p>
           </div>
         </NavLink>
-        <button 
+        <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:text-accent-danger hover:bg-white/5 transition-all group"
+          className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-white/70 hover:text-accent-danger hover:bg-white/5 transition-all group"
         >
           <LogOut size={20} className="group-hover:-translate-x-1 transition-transform shrink-0" />
           <span className="font-bold text-sm">Sign Out</span>

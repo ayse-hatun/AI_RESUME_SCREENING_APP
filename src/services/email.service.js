@@ -3,6 +3,12 @@
 
 require('dotenv').config();
 const nodemailer = require('nodemailer');
+const dns = require('dns');
+
+// Force Node.js to prefer IPv4 DNS resolution over IPv6 to prevent ENETUNREACH in IPv4-only networks (like Railway)
+if (dns.setDefaultResultOrder) {
+    dns.setDefaultResultOrder('ipv4first');
+}
 
 // Helper to escape HTML to prevent XSS in emails
 function escapeHtml(str) {
@@ -26,13 +32,25 @@ function getFromAddress() {
     return '"AI Resume Screener" <noreply@smarthire.ai>';
 }
 
-// Create reusable transporter using Gmail SMTP
+// Create reusable transporter using Gmail SMTP with connection pooling for production stability
 const transporter = nodemailer.createTransport({
     service: 'gmail',
+    pool: true,             // Enable connection pooling
+    maxConnections: 5,      // Keep up to 5 connections open
+    maxMessages: 100,       // Max messages per connection
+    rateDelta: 1000,
+    rateLimit: 5,           // Max 5 messages per second
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS      // Gmail App Password (16 chars)
-    }
+    },
+    // Force Node.js socket resolver to use IPv4 family
+    lookup: (hostname, options, callback) => {
+        dns.lookup(hostname, { family: 4 }, callback);
+    },
+    connectionTimeout: 10000, // 10s timeout to avoid hangs
+    greetingTimeout: 10000,
+    socketTimeout: 15000
 });
 
 /**
@@ -43,6 +61,12 @@ const transporter = nodemailer.createTransport({
  * @param {Object} screeningResult - The AI-generated screening result object
  */
 async function sendScreeningResultEmail(toEmail, candidateName, jobTitle, screeningResult) {
+    // Validate recipient and skip if empty or a placeholder
+    if (!toEmail || toEmail.trim() === '' || toEmail === 'bulk-upload@pending.ai' || toEmail.includes('pending.ai')) {
+        console.log(`ℹ️ [Email Service] Skipping acknowledgement email: "${toEmail}" is empty, missing, or a placeholder.`);
+        return { skipped: true, reason: 'placeholder_or_empty_email' };
+    }
+
     // Only send a neutral acknowledgement — AI scores and analysis stay internal.
     const htmlContent = `
 <!DOCTYPE html>
@@ -91,7 +115,7 @@ async function sendScreeningResultEmail(toEmail, candidateName, jobTitle, screen
     const mailOptions = {
         from: getFromAddress(),
         to: toEmail,
-        subject: `Application Received – ${escapeHtml(jobTitle)}`,
+        subject: `Application Received – ${jobTitle}`, // Plain text subject line
         html: htmlContent
     };
 
@@ -119,17 +143,22 @@ async function verifyEmailConnection() {
     }
 }
 
-/**
- * Sends a status update email (e.g., shortlisted, rejected)
- */
 async function sendStatusUpdateEmail(toEmail, candidateName, jobTitle, stage, _shortReason = '') {
+    // Validate recipient and skip if empty or a placeholder
+    if (!toEmail || toEmail.trim() === '' || toEmail === 'bulk-upload@pending.ai' || toEmail.includes('pending.ai')) {
+        console.log(`ℹ️ [Email Service] Skipping status update email (${stage}): "${toEmail}" is empty, missing, or a placeholder.`);
+        return { skipped: true, reason: 'placeholder_or_empty_email' };
+    }
+
+    console.log(`✉️ [Email Service] Initiating status email (${stage}) for ${candidateName} (${toEmail}) | Job: ${jobTitle}`);
+
     let subject = '';
     let message = '';
     let headerColor = '';
     let headerText = '';
 
     if (stage === 'shortlisted') {
-        subject = `Congratulations! You've been Shortlisted for ${escapeHtml(jobTitle)}`;
+        subject = `Congratulations! You've been Shortlisted for ${jobTitle}`;
         headerColor = 'linear-gradient(135deg, #08544A, #32BB32)'; // Brand Green Gradient
         headerText = 'Great News!';
         message = `<p>Hi <span class="highlight">${escapeHtml(candidateName)}</span>,</p>
@@ -137,7 +166,7 @@ async function sendStatusUpdateEmail(toEmail, candidateName, jobTitle, stage, _s
                    <p>We are delighted to inform you that your profile stood out to us, and you have been <strong>shortlisted</strong> for the next round! Our recruitment team is very excited about your potential and will be reaching out to you shortly with details regarding the next steps.</p>
                    <p>We appreciate your patience and look forward to connecting with you soon.</p>`;
     } else if (stage === 'rejected') {
-        subject = `Update on your application for ${escapeHtml(jobTitle)}`;
+        subject = `Update on your application for ${jobTitle}`;
         headerColor = 'linear-gradient(135deg, #475569, #1e293b)'; // Slate Gray Gradient
         headerText = 'Application Update';
         message = `<p>Hi <span class="highlight">${escapeHtml(candidateName)}</span>,</p>
@@ -145,7 +174,7 @@ async function sendStatusUpdateEmail(toEmail, candidateName, jobTitle, stage, _s
                    <p>While we were impressed by your background, we regret to inform you that we will not be moving forward with your application at this time. We receive many strong applications, and making these decisions is never easy.</p>
                    <p>We sincerely appreciate the time and effort you put into your application, and we wish you absolute best in your future career endeavors.</p>`;
     } else if (stage === 'applied') {
-        subject = `Application Received: ${escapeHtml(jobTitle)}`;
+        subject = `Application Received: ${jobTitle}`;
         headerColor = 'linear-gradient(135deg, #3b82f6, #2563eb)'; // Blue Gradient
         headerText = 'Application Received';
         message = `<p>Hi <span class="highlight">${escapeHtml(candidateName)}</span>,</p>

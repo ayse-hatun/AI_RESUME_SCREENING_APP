@@ -304,7 +304,7 @@ exports.forgotPassword = async (req, res) => {
             });
 
         // Respond immediately without waiting for the slow SMTP server handshake
-        return res.status(200).json({ success: true, message: 'Reset link sent to email' });
+        return res.status(200).json({ success: true, message: 'If an account with that email exists, a reset link has been sent.' });
     } catch (error) {
         console.error('❌ Forgot Password Error:', error.message, error.stack);
         res.status(500).json({ success: false, error: `Password reset failed: ${error.message}` });
