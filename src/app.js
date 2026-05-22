@@ -73,7 +73,7 @@ app.use(helmet());                      // Set security HTTP headers
 // Rate limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: parseInt(process.env.RATE_LIMIT_MAX, 10) || 1000, // Increased from 100 to 1000 to prevent blockages during active recruitment sessions
     message: { success: false, error: 'Too many requests from this IP, please try again in 15 minutes' },
     validate: { trustProxy: false } // Suppress false-positive proxy warning; trust proxy set above
 });
