@@ -10,6 +10,47 @@ if (dns.setDefaultResultOrder) {
     dns.setDefaultResultOrder('ipv4first');
 }
 
+// Disable resolving IPv6 AAAA records locally in this module
+dns.resolve6 = function(hostname, options, callback) {
+    const cb = typeof options === 'function' ? options : callback;
+    if (typeof cb === 'function') {
+        cb(new Error('IPv6 resolution disabled'));
+    } else {
+        return Promise.reject(new Error('IPv6 resolution disabled'));
+    }
+};
+if (dns.promises && dns.promises.resolve6) {
+    dns.promises.resolve6 = function() {
+        return Promise.reject(new Error('IPv6 resolution disabled'));
+    };
+}
+const originalResolve = dns.resolve;
+dns.resolve = function(hostname, rrtype, callback) {
+    let type = rrtype;
+    let cb = callback;
+    if (typeof rrtype === 'function') {
+        cb = rrtype;
+        type = 'A';
+    }
+    if (type === 'AAAA') {
+        if (typeof cb === 'function') {
+            cb(new Error('IPv6 resolution disabled'));
+            return;
+        }
+        return Promise.reject(new Error('IPv6 resolution disabled'));
+    }
+    return originalResolve.apply(this, arguments);
+};
+if (dns.promises && dns.promises.resolve) {
+    const originalPromisesResolve = dns.promises.resolve;
+    dns.promises.resolve = function(hostname, rrtype) {
+        if (rrtype === 'AAAA') {
+            return Promise.reject(new Error('IPv6 resolution disabled'));
+        }
+        return originalPromisesResolve.apply(this, arguments);
+    };
+}
+
 // Helper to escape HTML to prevent XSS in emails
 function escapeHtml(str) {
     if (!str) return '';
