@@ -22,11 +22,24 @@ if (
 
 // ─── CORS — MUST be first so error responses (429, 408) also carry CORS headers ──
 // Without this, rate-limit and timeout errors appear as CORS failures in the browser.
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Fail fast in production if FRONTEND_URL is not configured — prevents silent open CORS.
+if (isProduction && !process.env.FRONTEND_URL) {
+    console.error('❌ FATAL: FRONTEND_URL env var is not set in production. CORS will block all browser requests. Set it in your Railway variables.');
+    process.exit(1);
+}
+
 const allowedOrigins = [
-    /^https?:\/\/localhost(:\d+)?$/,     // Any localhost port (dev)
-    /^https?:\/\/127\.0\.0\.1(:\d+)?$/,  // 127.0.0.1 dev
-    process.env.FRONTEND_URL,             // e.g. https://smarthire-rust.vercel.app
-    /^https:\/\/.*\.vercel\.app$/        // Any Vercel preview deployment
+    // Localhost patterns — dev only
+    ...(!isProduction ? [
+        /^https?:\/\/localhost(:\d+)?$/,
+        /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
+    ] : []),
+    // Explicit production frontend URL (e.g. https://smarthire-rust.vercel.app)
+    process.env.FRONTEND_URL,
+    // Narrowed Vercel pattern — only smarthire-* preview deployments, not all of vercel.app
+    /^https:\/\/smarthire-[a-z0-9-]+\.vercel\.app$/,
 ].filter(Boolean);
 
 app.use(cors({
