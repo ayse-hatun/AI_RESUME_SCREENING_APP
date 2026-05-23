@@ -1,121 +1,195 @@
 <div align="center">
 
-#  AI Resume Screening Platform
+# 🧠 SmartHire AI
 
-**Transforming Recruitment with Generative AI Intelligence**
-
-[![Built with Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org)
-[![React](https://img.shields.io/badge/React-19-blue.svg)](https://react.dev/)
-[![Powered by Gemini](https://img.shields.io/badge/AI-Google_Gemini-orange.svg)](https://deepmind.google/technologies/gemini/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+### Intelligent Resume Screening & Candidate Evaluation System
 
 </div>
 
----
+<p align="center">
+An AI-powered recruitment intelligence system that transforms resumes into structured, explainable hiring decisions using high-reasoning LLM pipelines, validation layers, and scoring architectures designed for real-world reliability.
+</p>
 
-## 🌟 Overview
+<p align="center">
 
-**Stop reading resumes, start meeting talent.**
+[![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org)
+[![React](https://img.shields.io/badge/React-19-blue.svg)](https://react.dev/)
+[![AI](https://img.shields.io/badge/LLM-High%20Reasoning-orange.svg)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-The **AI Resume Screening Platform** is an enterprise-grade solution designed to eliminate the bottleneck of manual resume review. By combining advanced natural language processing with a sleek, responsive interface, we provide recruiters with:
-
-- ⚡ **Instant Analysis**: AI-driven scoring based on skills, experience, and cultural fit.
-- 🎯 **Contextual Matching**: Deep semantic understanding of candidate qualifications against job descriptions.
-- 📊 **Actionable Insights**: Detailed executive summaries explaining exactly *why* a candidate is or isn't a match.
-
-## ✨ Core Features
-
-- 🧠 **AI-Powered Screening Engine**: Utilizes Google's Gemini Pro to evaluate `.pdf` and `.docx` resumes intelligently.
-- 🏗️ **Dynamic Candidate Pipeline**: Drag-and-drop Kanban board to seamlessly transition candidates from "Applied" to "Hired".
-- 🚀 **Bulk Processing**: Upload and screen dozens of resumes simultaneously with real-time progress indicators.
-- 🎨 **Premium UI/UX**: State-of-the-art Glassmorphism design with Framer Motion animations and dual theme support (Light/Dark mode).
-- 🔒 **Enterprise Security**: Role-based access control, robust JWT authentication, rate limiting, and input sanitization built-in.
-
-## 🛠️ Tech Stack
-
-### Backend
-- **Framework**: Node.js & Express.js
-- **Database**: MongoDB & Mongoose
-- **AI Integration**: `@google/genai` (Gemini 2.5 Flash / Pro)
-- **Security**: JWT, Helmet, Express Rate Limit, Express Validator
-
-### Frontend
-- **Framework**: React 19 (Vite)
-- **Styling**: Tailwind CSS
-- **Animations**: Framer Motion
-- **Icons**: Lucide React
-
-## 🚀 Quick Start
-
-Get the platform up and running locally in under 2 minutes.
-
-### Prerequisites
-- Node.js (v18 or higher)
-- MongoDB Instance (Local or Atlas)
-- Google Gemini API Key
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/ayse-hatun/AI_RESUME_SCREENING_APP.git
-cd AI_RESUME_SCREENING_APP
-```
-
-### 2. Install Dependencies
-```bash
-# Install backend dependencies
-npm install
-
-# Install frontend dependencies
-cd frontend
-npm install
-cd ..
-```
-
-### 3. Environment Configuration
-Create a `.env` file in the root directory (never commit this file!):
-```env
-PORT=3000
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_super_secret_jwt_key
-JWT_EXPIRE=7d
-GEMINI_API_KEY=your_google_gemini_api_key
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_gmail_app_password
-EMAIL_FROM="AI Resume Screener" <your_email@gmail.com>
-
-# Note: Check the `.env.example` file for the complete list of variables.
-```
-
-### 4. Launch the Application
-```bash
-# Run the backend server (from the root directory)
-npm run dev
-
-# In a new terminal, run the frontend app
-cd frontend
-npm run dev
-```
-
-Visit `http://localhost:5173` to view the application!
-
-## 📖 Documentation
-
-For detailed architecture, API references, and deployment guides, please check our [Comprehensive Documentation](./DOCUMENTATION.md).
-
-## 🤝 Contributing
-
-We welcome contributions! Please follow standard GitHub flow:
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 🛡️ License
-
-Distributed under the MIT License. See `LICENSE` for more information.
+</p>
 
 ---
+
+## 🚀 Overview
+
+Recruitment systems today fail at scale:
+
+- Manual resume screening is slow and inconsistent  
+- Keyword-based ATS systems miss contextual talent  
+- LLM-based scoring is often unstable and non-deterministic  
+
+**SmartHire AI solves this by introducing structured AI decision pipelines for hiring.**
+
+Instead of raw text generation, it builds a **controlled intelligence system for candidate evaluation**.
+
+---
+
+## ⚙️ Core Features
+
+🧠 AI-powered resume understanding and extraction  
+📊 Structured candidate scoring against job descriptions  
+🔐 Multi-stage validation layer to reduce hallucinations  
+⚖️ Explainable ranking system for transparent decisions  
+🚀 Bulk resume processing pipeline  
+📁 Real-time dashboard for HR decision-making  
+🧩 Modular architecture for scalable AI workflows  
+
+---
+
+## 🧠 System Architecture
+
+Resume Upload
+↓
+Document Parser (PDF/DOCX → Structured JSON)
+↓
+LLM Evaluation Engine (Skills + Experience Analysis)
+↓
+Prompt Constraint & Scoring Rules Layer
+↓
+Validation Engine (Consistency + Hallucination Filtering)
+↓
+Ranking & Decision Engine
+↓
+HR Dashboard Interface
+---
+📌 Architecture Visual:
+
+/assets/smarthire-architecture.png
+
+---
+
+## 🔄 System Workflow
+
+- Candidate uploads resume  
+- System extracts structured entities (skills, experience, education)  
+- LLM evaluates the candidate against the job description  
+- Scoring engine applies structured evaluation rules  
+- Validation layer ensures output consistency  
+- Final ranking is generated  
+- Dashboard displays explainable results  
+
+---
+
+## 🧠 Engineering Design Philosophy
+
+This system is built on one core principle:
+
+> ⚠️ LLM outputs are not trusted — they are verified.
+
+### Key Design Decisions:
+
+- Structured prompting instead of free-form generation  
+- Multi-stage pipeline instead of single LLM call  
+- Separation of reasoning vs scoring logic  
+- Validation layer for hallucination control  
+- Deterministic ranking for reproducibility  
+
+👉 This transforms LLM usage from:
+❌ Conversational generator  
+to  
+✅ Controlled decision-making system  
+
+---
+
+## 📊 Key Capabilities
+
+✔ Resume-to-structured-data transformation  
+✔ AI-based candidate evaluation engine  
+✔ Job-description semantic matching  
+✔ Explainable ranking system  
+✔ Validation-driven AI pipeline  
+✔ HR-style decision dashboard  
+✔ Scalable backend architecture  
+
+---
+
+## 🧰 Tech Stack
+
+- Frontend: React.js, Tailwind CSS  
+- Backend: Node.js, Express.js  
+- AI Layer: High-reasoning LLM APIs (multi-provider)  
+- Database: MongoDB / Supabase (configurable)  
+- Architecture: Multi-stage AI pipelines + validation systems  
+- APIs: REST-based microservice structure  
+
+---
+
+## 📸 Screenshots
+
+### 🏠 Dashboard Interface
+![Dashboard](./assets/screenshots/dashboard.png)
+
+### 📄 Resume Evaluation Flow
+![Evaluation](./assets/screenshots/evaluation.png)
+
+### 📊 Candidate Ranking System
+![Ranking](./assets/screenshots/ranking.png)
+
+---
+
+## 📁 Project Structure
+frontend/
+backend/
+llm-engine/
+validation-layer/
+scoring-engine/
+assets/
+├── smarthire-architecture.png
+├── screenshots/
+
+
+---
+
+## 🚀 Future Improvements
+
+- Multi-agent evaluation system  
+- Bias detection in candidate scoring  
+- Advanced skill ontology mapping  
+- Interview simulation module  
+- Enterprise ATS integration  
+
+---
+
+## 🧠 Research Alignment
+
+This project aligns with modern AI research domains:
+
+- LLM-based decision systems  
+- Multi-agent recruitment frameworks  
+- Explainable AI (XAI) in hiring  
+- Retrieval-augmented evaluation pipelines  
+- Fairness-aware automation systems  
+
+---
+
+## 👩‍💻 Author
+
+**Ayesha Rasheed**  
+Full Stack & AI Systems Engineer  
+
+Building structured AI systems that transform real-world decision workflows into reliable, explainable, and scalable intelligence systems.
+
+---
+
+## ⭐ Impact Statement
+
+SmartHire AI acts as a **decision intelligence layer for recruitment**, converting unstructured resumes into structured, explainable hiring outcomes.
+
+---
+
 <div align="center">
-Built with ❤️ for the future of hiring.
+
+⚡ From resumes → structured intelligence → trusted decisions
+
 </div>
