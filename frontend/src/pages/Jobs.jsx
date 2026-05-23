@@ -44,6 +44,7 @@ const Jobs = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingJob, setEditingJob] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
   const [user] = useState(() => {
@@ -192,7 +193,6 @@ const Jobs = () => {
                     <option value="closed">Closed</option>
                     <option value="deactivated">Deactivated</option>
                     <option value="expired">Expired</option>
-                    <option value="draft">Draft</option>
                   </select>
                   <button 
                     onClick={(e) => {
@@ -232,9 +232,18 @@ const Jobs = () => {
                 </div>
               </div>
               
-              <div className="mt-auto flex gap-2">
-                <CopyLinkButton jobId={job._id} fullWidth={false} />
-                <button onClick={() => navigate(`/app/jobs/${job._id}`, { state: { from: '/app/jobs' } })} className="btn-primary flex-1 py-2 flex justify-center items-center gap-1">
+              <div className="mt-auto flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <CopyLinkButton jobId={job._id} fullWidth={false} />
+                  <button 
+                    onClick={() => setEditingJob(job)}
+                    className="btn-secondary flex-1 py-2 flex justify-center items-center gap-1 text-sm font-semibold transition-all hover:scale-105 active:scale-95"
+                    title="Edit and Save as New Job"
+                  >
+                    Edit
+                  </button>
+                </div>
+                <button onClick={() => navigate(`/app/jobs/${job._id}`, { state: { from: '/app/jobs' } })} className="btn-primary w-full py-2 flex justify-center items-center gap-1">
                   Open <ChevronRight size={16} />
                 </button>
               </div>
@@ -247,6 +256,17 @@ const Jobs = () => {
         <CreateJobModal 
           onClose={() => setShowCreateModal(false)} 
           onJobCreated={loadJobs}
+        />
+      )}
+
+      {editingJob && (
+        <CreateJobModal 
+          initialData={editingJob}
+          onClose={() => setEditingJob(null)} 
+          onJobCreated={() => {
+            setEditingJob(null);
+            loadJobs();
+          }}
         />
       )}
     </div>

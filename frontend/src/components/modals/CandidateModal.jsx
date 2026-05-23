@@ -10,6 +10,14 @@ const CandidateModal = ({ resume, onClose, onUpdate }) => {
     !resume.screeningResult?.matchScore || resume.status === 'processing'
   );
 
+  React.useEffect(() => {
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
+
   // Poll for updates if the resume is still processing
   const resumeId = currentResume?._id;
   React.useEffect(() => {

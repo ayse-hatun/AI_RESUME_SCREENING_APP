@@ -61,7 +61,7 @@ const jobSchema = new mongoose.Schema({
     },
     autoRejectionThreshold: {
         type: Number,
-        min: 0,
+        min: [40, 'Auto Rejection Threshold must be at least 40'],
         max: 100,
         default: 40
     },

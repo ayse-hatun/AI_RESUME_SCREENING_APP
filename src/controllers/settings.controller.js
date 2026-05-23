@@ -41,7 +41,11 @@ exports.updateSettings = async (req, res) => {
         const sanitizedUpdate = {};
         allowedFields.forEach(field => {
             if (req.body[field] !== undefined) {
-                sanitizedUpdate[field] = req.body[field];
+                let val = req.body[field];
+                if (field === 'minimumScoreThreshold') {
+                    val = Math.max(40, Number(val) || 40);
+                }
+                sanitizedUpdate[field] = val;
             }
         });
 

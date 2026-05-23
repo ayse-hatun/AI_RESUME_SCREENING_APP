@@ -94,6 +94,80 @@ const transporter = nodemailer.createTransport({
     socketTimeout: 15000
 });
 
+const axios = require('axios');
+
+// Helper to extract email and name from a "Name <email@domain.com>" string
+function parseFromAddress(fromStr) {
+    if (!fromStr) return { name: 'AI Resume Screener', email: process.env.EMAIL_USER || 'noreply@smarthire.ai' };
+    const emailRegex = /<([^>]+)>/;
+    const match = fromStr.match(emailRegex);
+    if (match) {
+        const email = match[1].trim();
+        const name = fromStr.replace(emailRegex, '').replace(/"/g, '').trim();
+        return { name: name || 'AI Resume Screener', email };
+    }
+    return { name: 'AI Resume Screener', email: fromStr.trim() };
+}
+
+// Router/helper to send email via HTTP APIs (Resend, SendGrid) to bypass Railway SMTP port blocks, or fallback to Nodemailer SMTP
+async function sendEmailHelper(mailOptions) {
+    const { from, to, subject, html } = mailOptions;
+
+    // 1. Resend HTTP API
+    if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.trim()) {
+        console.log(`📡 [Email Service] Sending email via Resend HTTP API to ${to}...`);
+        try {
+            const response = await axios.post('https://api.resend.com/emails', {
+                from: from,
+                to: [to],
+                subject: subject,
+                html: html
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${process.env.RESEND_API_KEY.trim()}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            console.log(`✅ [Resend] Email sent to ${to} | ID: ${response.data.id}`);
+            return { messageId: response.data.id };
+        } catch (error) {
+            const errMsg = error.response?.data?.message || error.response?.data?.error || error.message;
+            console.error(`❌ [Resend] Failed to send email via HTTP API:`, errMsg);
+            throw new Error(`Resend API Error: ${errMsg}`);
+        }
+    }
+
+    // 2. SendGrid HTTP API
+    if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY.trim()) {
+        console.log(`📡 [Email Service] Sending email via SendGrid HTTP API to ${to}...`);
+        try {
+            const parsedFrom = parseFromAddress(from);
+            const response = await axios.post('https://api.sendgrid.com/v3/mail/send', {
+                personalizations: [{ to: [{ email: to }] }],
+                from: { email: parsedFrom.email, name: parsedFrom.name },
+                subject: subject,
+                content: [{ type: 'text/html', value: html }]
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${process.env.SENDGRID_API_KEY.trim()}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            console.log(`✅ [SendGrid] Email sent to ${to}`);
+            return { messageId: response.headers['x-message-id'] || 'sendgrid-success' };
+        } catch (error) {
+            const errMsg = error.response?.data?.errors?.[0]?.message || error.response?.data?.message || error.message;
+            console.error(`❌ [SendGrid] Failed to send email via HTTP API:`, errMsg);
+            throw new Error(`SendGrid API Error: ${errMsg}`);
+        }
+    }
+
+    // 3. Fallback: Nodemailer SMTP
+    console.log(`🔌 [Email Service] Falling back to Nodemailer SMTP for ${to}...`);
+    return await transporter.sendMail(mailOptions);
+}
+
+
 /**
  * Sends a resume screening result email to the candidate
  * @param {string} toEmail - Candidate's email address
@@ -161,7 +235,7 @@ async function sendScreeningResultEmail(toEmail, candidateName, jobTitle, screen
     };
 
     try {
-        const info = await transporter.sendMail(mailOptions);
+        const info = await sendEmailHelper(mailOptions);
         console.log(`✅ Acknowledgement email sent to ${toEmail} | Message ID: ${info.messageId}`);
         return info;
     } catch (error) {
@@ -174,6 +248,14 @@ async function sendScreeningResultEmail(toEmail, candidateName, jobTitle, screen
  * Verify the email transporter is working
  */
 async function verifyEmailConnection() {
+    if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.trim()) {
+        console.log('✅ Resend HTTP API connection verified (API Key configured)');
+        return true;
+    }
+    if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY.trim()) {
+        console.log('✅ SendGrid HTTP API connection verified (API Key configured)');
+        return true;
+    }
     try {
         await transporter.verify();
         console.log('✅ Gmail SMTP connection verified');
@@ -269,7 +351,7 @@ async function sendStatusUpdateEmail(toEmail, candidateName, jobTitle, stage, _s
     };
 
     try {
-        const info = await transporter.sendMail(mailOptions);
+        const info = await sendEmailHelper(mailOptions);
         console.log(`✅ Status email (${stage}) sent to ${toEmail} | Message ID: ${info.messageId}`);
         return info;
     } catch (error) {
@@ -332,7 +414,7 @@ async function sendVerificationEmail(toEmail, name, otpCode, verifyUrl) {
     };
 
     try {
-        const info = await transporter.sendMail(mailOptions);
+        const info = await sendEmailHelper(mailOptions);
         console.log(`✅ Verification email sent to ${toEmail}`);
         return info;
     } catch (error) {
@@ -387,7 +469,7 @@ async function sendPasswordResetEmail(toEmail, name, resetUrl) {
     };
 
     try {
-        const info = await transporter.sendMail(mailOptions);
+        const info = await sendEmailHelper(mailOptions);
         console.log(`✅ Password reset email sent to ${toEmail}`);
         return info;
     } catch (error) {

@@ -19,7 +19,7 @@ const settingsSchema = new mongoose.Schema({
     },
     minimumScoreThreshold: {
         type: Number,
-        min: 0,
+        min: [40, 'Minimum Match Score Threshold must be at least 40'],
         max: 100,
         default: 72
     },

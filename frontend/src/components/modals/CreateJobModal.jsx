@@ -33,23 +33,31 @@ const CopyLinkButton = ({ jobId, fullWidth }) => {
   );
 };
 
-const CreateJobModal = ({ onClose, onJobCreated }) => {
+const CreateJobModal = ({ onClose, onJobCreated, initialData }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [createdJobId, setCreatedJobId] = useState(null);
   const [skillInput, setSkillInput] = useState('');
   const [formData, setFormData] = useState({
-    title: '',
-    department: 'Engineering',
-    location: 'Remote',
-    type: 'Full-time',
-    description: '',
-    requiredSkills: [],
-    educationLevel: "Bachelor's Degree",
-    autoRejectionEnabled: true,
-    autoRejectionThreshold: 60
+    title: initialData?.title || '',
+    department: initialData?.department || 'Engineering',
+    location: initialData?.location || 'Remote',
+    type: initialData?.type || 'Full-time',
+    description: initialData?.description || '',
+    requiredSkills: initialData?.requiredSkills || [],
+    educationLevel: initialData?.educationLevel || "Bachelor's Degree",
+    autoRejectionEnabled: initialData?.autoRejectionEnabled ?? true,
+    autoRejectionThreshold: initialData?.autoRejectionThreshold ?? 60
   });
+
+  useEffect(() => {
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
 
   const handleAddSkill = () => {
     if (!skillInput.trim()) return;
@@ -101,20 +109,20 @@ const CreateJobModal = ({ onClose, onJobCreated }) => {
 
   if (isSuccess) {
     return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-fade-in">
-        <div className="glass-card w-full max-w-md p-8 relative animate-slide-up flex flex-col items-center text-center">
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-background/80 backdrop-blur-md animate-fade-in overflow-y-auto">
+        <div className="glass-card w-full max-w-md p-6 sm:p-8 my-auto relative animate-slide-up flex flex-col items-center text-center max-h-[95vh] overflow-y-auto">
           <button onClick={onClose} className="absolute right-6 top-6 text-text-muted hover:text-white transition-colors">
             <X size={24} />
           </button>
           
-          <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 mb-6 border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+          <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 mb-6 border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.2)] shrink-0">
             <CheckCircle2 size={32} />
           </div>
           
           <h2 className="text-2xl font-black text-text-primary dark:text-white tracking-tight mb-2">Job Created Successfully!</h2>
           <p className="text-text-secondary mb-8 text-sm font-medium">Your new AI screening pipeline is live.</p>
           
-          <div className="w-full bg-white dark:bg-[#0f0f13] border border-border dark:border-white/5 rounded-xl p-5 mb-8 text-left relative overflow-hidden">
+          <div className="w-full bg-white dark:bg-[#0f0f13] border border-border dark:border-white/5 rounded-xl p-5 mb-8 text-left relative overflow-hidden shrink-0">
              <div className="absolute top-0 left-0 bottom-0 w-1 bg-accent-primary shadow-[0_0_20px_2px_rgba(99,102,241,0.5)]"></div>
             <h3 className="font-bold text-text-primary dark:text-white mb-1 pl-2">{formData.title}</h3>
             <p className="text-xs text-text-muted mb-4 pl-2 font-bold tracking-wider uppercase">{formData.department} • {formData.location}</p>
@@ -133,7 +141,7 @@ const CreateJobModal = ({ onClose, onJobCreated }) => {
             </div>
           </div>
           
-          <div className="w-full space-y-3">
+          <div className="w-full space-y-3 shrink-0">
              {createdJobId && <CopyLinkButton jobId={createdJobId} fullWidth />}
              <button onClick={onClose} className="btn-secondary w-full py-3 font-bold">
                Go to Dashboard
@@ -145,19 +153,19 @@ const CreateJobModal = ({ onClose, onJobCreated }) => {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-fade-in">
-      <div className="glass-card w-full max-w-2xl p-8 relative animate-slide-up max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-background/80 backdrop-blur-md animate-fade-in overflow-y-auto">
+      <div className="glass-card w-full max-w-2xl p-5 sm:p-8 my-auto relative animate-slide-up max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
         <button onClick={onClose} className="absolute right-6 top-6 text-text-muted hover:text-white transition-colors">
           <X size={24} />
         </button>
 
-        <div className="flex items-center gap-4 mb-8">
-          <div className="w-12 h-12 bg-accent-primary/20 rounded-xl flex items-center justify-center text-accent-primary">
+        <div className="flex items-center gap-4 mb-6 sm:mb-8">
+          <div className="w-12 h-12 bg-accent-primary/20 rounded-xl flex items-center justify-center text-accent-primary shrink-0">
             <Sparkles size={24} />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-white">Create New Role</h2>
-            <p className="text-text-secondary text-sm">Gemini will use these specific requirements for screening.</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-white">Create New Role</h2>
+            <p className="text-text-secondary text-xs sm:text-sm">Gemini will use these specific requirements for screening.</p>
           </div>
         </div>
 
@@ -168,26 +176,24 @@ const CreateJobModal = ({ onClose, onJobCreated }) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {/* Dummy hidden input to trap browser autofill */}
           <input type="text" style={{ display: 'none' }} />
           
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-text-secondary">Job Title</label>
-              <input
-                type="text"
-                className="input-field w-full"
-                placeholder="e.g. Senior Full Stack Engineer"
-                value={formData.title}
-                autoComplete="new-password"
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
-                required
-              />
-            </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-text-secondary">Job Title</label>
+            <input
+              type="text"
+              className="input-field w-full"
+              placeholder="e.g. Senior Full Stack Engineer"
+              value={formData.title}
+              autoComplete="new-password"
+              onChange={(e) => setFormData({...formData, title: e.target.value})}
+              required
+            />
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="space-y-2">
               <label className="text-sm font-semibold text-text-secondary">Department</label>
               <select 
@@ -215,7 +221,7 @@ const CreateJobModal = ({ onClose, onJobCreated }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="space-y-2">
               <label className="text-sm font-semibold text-text-secondary flex items-center gap-2">
                 <GraduationCap size={16} className="text-accent-primary" /> Minimum Education
@@ -252,7 +258,7 @@ const CreateJobModal = ({ onClose, onJobCreated }) => {
             <label className="text-sm font-semibold text-text-secondary flex items-center gap-2">
               <Target size={16} className="text-accent-primary" /> Required Skills
             </label>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 className="input-field flex-1"
@@ -266,7 +272,7 @@ const CreateJobModal = ({ onClose, onJobCreated }) => {
                 type="button" 
                 onClick={handleAddSkill}
                 title="Add skill"
-                className="flex items-center justify-center px-4 py-3 rounded-xl bg-transparent border-2 border-accent-primary text-accent-primary hover:text-white hover:bg-accent-primary/10 hover:shadow-lg hover:shadow-accent-primary/30 transition-all duration-200 hover:scale-105 active:scale-95"
+                className="flex items-center justify-center px-6 py-3 rounded-xl bg-transparent border-2 border-accent-primary text-accent-primary hover:text-white hover:bg-accent-primary/10 hover:shadow-lg hover:shadow-accent-primary/30 transition-all duration-200 hover:scale-105 active:scale-95 sm:w-auto w-full"
               >
                 <Plus size={24} strokeWidth={2.8} />
               </button>
@@ -301,7 +307,7 @@ const CreateJobModal = ({ onClose, onJobCreated }) => {
             />
           </div>
 
-          <div className={`p-4 rounded-2xl flex items-center justify-between transition-all ${formData.autoRejectionEnabled ? 'bg-accent-primary/5 border border-accent-primary/20' : 'bg-white/5 border border-white/10 opacity-60'}`}>
+          <div className={`p-4 rounded-2xl flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between transition-all ${formData.autoRejectionEnabled ? 'bg-accent-primary/5 border border-accent-primary/20' : 'bg-white/5 border border-white/10 opacity-60'}`}>
             <div className="flex items-center gap-4">
               <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${formData.autoRejectionEnabled ? 'bg-accent-primary/10 text-accent-primary' : 'bg-white/10 text-text-muted'}`}>
                 <ShieldCheck size={20} />
@@ -323,21 +329,21 @@ const CreateJobModal = ({ onClose, onJobCreated }) => {
             </div>
             <input 
               type="range" 
-              min="0" 
+              min="40" 
               max="100" 
               disabled={!formData.autoRejectionEnabled}
               value={formData.autoRejectionThreshold}
               onChange={(e) => setFormData({...formData, autoRejectionThreshold: parseInt(e.target.value)})}
-              className={`accent-accent-primary w-32 h-1 bg-border rounded-full appearance-none cursor-pointer ${!formData.autoRejectionEnabled ? 'cursor-not-allowed opacity-50' : ''}`}
+              className={`accent-accent-primary w-full sm:w-32 h-1 bg-border rounded-full appearance-none cursor-pointer ${!formData.autoRejectionEnabled ? 'cursor-not-allowed opacity-50' : ''}`}
             />
           </div>
 
-          <div className="flex gap-4 pt-4 pb-2">
-            <button type="button" onClick={onClose} className="btn-secondary flex-1 py-3">Cancel</button>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 pb-2">
+            <button type="button" onClick={onClose} className="btn-secondary w-full sm:flex-1 py-3 order-2 sm:order-1">Cancel</button>
             <button 
               type="submit" 
               disabled={loading}
-              className="btn-primary flex-1 py-3 flex items-center justify-center gap-2"
+              className="btn-primary w-full sm:flex-1 py-3 flex items-center justify-center gap-2 order-1 sm:order-2"
             >
               {loading ? <Loader2 className="animate-spin" size={20} /> : 'Create AI Pipeline'}
             </button>

@@ -47,8 +47,15 @@ const Settings = () => {
     setError(null);
     if (timerRef.current) clearTimeout(timerRef.current);
 
+    const clampedThreshold = Math.max(40, Number(settings.minimumScoreThreshold) || 40);
+    const updatedSettings = {
+      ...settings,
+      minimumScoreThreshold: clampedThreshold
+    };
+
     try {
-      await updateSettings(settings);
+      await updateSettings(updatedSettings);
+      setSettings(updatedSettings);
       setSaved(true);
       timerRef.current = setTimeout(() => setSaved(false), 3000);
     } catch (error) {
@@ -117,8 +124,12 @@ const Settings = () => {
                 type="number" 
                 className="input-field w-full md:w-1/3" 
                 value={settings.minimumScoreThreshold}
-                onChange={(e) => setSettings({...settings, minimumScoreThreshold: Number(e.target.value)})}
-                min="0" max="100"
+                onChange={(e) => setSettings({...settings, minimumScoreThreshold: e.target.value === '' ? '' : Number(e.target.value)})}
+                onBlur={() => {
+                  const val = Math.max(40, Number(settings.minimumScoreThreshold) || 40);
+                  setSettings({...settings, minimumScoreThreshold: val});
+                }}
+                min="40" max="100"
               />
               <p className="text-xs text-text-muted">Candidates scoring below this will be highlighted as low matches.</p>
             </div>

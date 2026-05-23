@@ -73,7 +73,7 @@ async function screenResumeHandler(req, res) {
         let { candidateName, candidateEmail, jobId, jobTitle, jobDescription } = req.body;
 
         let autoRejectionEnabled = false;
-        let autoRejectionThreshold = 0;
+        let autoRejectionThreshold = 40;
 
         // If jobId is provided, fetch job details from DB
         if (jobId) {
@@ -84,7 +84,7 @@ async function screenResumeHandler(req, res) {
             jobTitle = job.title;
             jobDescription = job.description;
             autoRejectionEnabled = job.autoRejectionEnabled || false;
-            autoRejectionThreshold = job.autoRejectionThreshold || 0;
+            autoRejectionThreshold = Math.max(40, job.autoRejectionThreshold || 40);
         }
 
         if (!candidateName || !candidateEmail || !jobTitle || !jobDescription) {
@@ -194,7 +194,7 @@ async function bulkScreenResumeHandler(req, res) {
         let targetJobTitle = jobTitle;
         let targetJobDesc = jobDescription;
         let autoRejectionEnabled = false;
-        let autoRejectionThreshold = 0;
+        let autoRejectionThreshold = 40;
 
         if (jobId) {
             const job = await Job.findById(jobId);
@@ -202,7 +202,7 @@ async function bulkScreenResumeHandler(req, res) {
             targetJobTitle = job.title;
             targetJobDesc = job.description;
             autoRejectionEnabled = job.autoRejectionEnabled || false;
-            autoRejectionThreshold = job.autoRejectionThreshold || 0;
+            autoRejectionThreshold = Math.max(40, job.autoRejectionThreshold || 40);
         }
 
         // 2️⃣ Create records for each file as PENDING
@@ -290,7 +290,7 @@ async function bulkScreenResumeHandler(req, res) {
 }
 
 // ─── Background Processor ──────────────────────────────────────────────────────
-async function processResumeBackground(resumeId, fileExt, filePath, candidateName, candidateEmail, jobTitle, jobDescription, jobId, autoRejectionEnabled = false, autoRejectionThreshold = 0) {
+async function processResumeBackground(resumeId, fileExt, filePath, candidateName, candidateEmail, jobTitle, jobDescription, jobId, autoRejectionEnabled = false, autoRejectionThreshold = 40) {
     const startTime = Date.now();
     try {
         await Resume.findByIdAndUpdate(resumeId, { status: 'processing' });
@@ -385,7 +385,10 @@ async function processResumeBackground(resumeId, fileExt, filePath, candidateNam
 
         // ─── Auto-Rejection Logic ───
         const score = aiResult.matchScore != null ? Number(aiResult.matchScore) : NaN;
-        const threshold = autoRejectionThreshold != null ? Number(autoRejectionThreshold) : NaN;
+        let threshold = autoRejectionThreshold != null ? Number(autoRejectionThreshold) : NaN;
+        if (!isNaN(threshold)) {
+            threshold = Math.max(40, threshold);
+        }
 
         if (jobId && autoRejectionEnabled && !isNaN(score) && !isNaN(threshold) && score < threshold) {
             updateData.pipelineStage = 'rejected';
@@ -647,12 +650,12 @@ async function retryResume(req, res) {
 
         // Re-trigger background processing
         let autoRejectionEnabled = false;
-        let autoRejectionThreshold = 0;
+        let autoRejectionThreshold = 40;
         if (resume.jobId) {
             const job = await Job.findById(resume.jobId);
             if (job) {
                 autoRejectionEnabled = job.autoRejectionEnabled || false;
-                autoRejectionThreshold = job.autoRejectionThreshold || 0;
+                autoRejectionThreshold = Math.max(40, job.autoRejectionThreshold || 40);
             }
         }
 

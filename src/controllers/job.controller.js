@@ -11,7 +11,11 @@ const Resume = require('../models/resume.model');
  */
 exports.createJob = async (req, res) => {
     try {
-        const { title, description, requiredSkills, experienceYears, department, location, educationLevel, workType, salaryRange, autoRejectionEnabled, autoRejectionThreshold } = req.body;
+        let { title, description, requiredSkills, experienceYears, department, location, educationLevel, workType, salaryRange, autoRejectionEnabled, autoRejectionThreshold } = req.body;
+        
+        if (autoRejectionThreshold !== undefined) {
+            autoRejectionThreshold = Math.max(40, Number(autoRejectionThreshold) || 40);
+        }
         
         const job = new Job({
             title,
@@ -111,13 +115,17 @@ exports.updateJob = async (req, res) => {
         const allowedFields = [
             'title', 'description', 'requiredSkills', 'experienceYears', 
             'department', 'location', 'educationLevel', 'workType', 
-            'salaryRange', 'status'
+            'salaryRange', 'status', 'autoRejectionEnabled', 'autoRejectionThreshold'
         ];
 
         const updateObj = {};
         allowedFields.forEach(field => {
             if (req.body[field] !== undefined) {
-                updateObj[field] = req.body[field];
+                let val = req.body[field];
+                if (field === 'autoRejectionThreshold') {
+                    val = Math.max(40, Number(val) || 40);
+                }
+                updateObj[field] = val;
             }
         });
 

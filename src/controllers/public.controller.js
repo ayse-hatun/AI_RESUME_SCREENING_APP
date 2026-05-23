@@ -146,7 +146,7 @@ exports.submitApplication = async (req, res) => {
                 job.description, 
                 job._id,
                 job.autoRejectionEnabled || false,
-                job.autoRejectionThreshold || 0
+                Math.max(40, job.autoRejectionThreshold || 40)
             );
         }, 50);
 

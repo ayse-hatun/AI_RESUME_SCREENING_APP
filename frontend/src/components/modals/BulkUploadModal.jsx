@@ -12,9 +12,12 @@ const BulkUploadModal = ({ jobId, onClose, onUploadSuccess }) => {
   const timeoutIdRef = useRef(null);
 
   useEffect(() => {
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
     return () => {
       mountedRef.current = false;
       if (timeoutIdRef.current) clearTimeout(timeoutIdRef.current);
+      document.body.style.overflow = originalStyle;
     };
   }, []);
 
