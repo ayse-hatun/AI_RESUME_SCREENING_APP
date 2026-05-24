@@ -71,10 +71,10 @@ const Jobs = () => {
   useEffect(() => {
     loadJobs(false);
     
-    // Poll for updates every 5 seconds to instantly catch new applications
+    // Poll for updates every 20 seconds to catch new applications
     const interval = setInterval(() => {
       loadJobs(true);
-    }, 5000);
+    }, 20000);
 
     return () => clearInterval(interval);
   }, []);

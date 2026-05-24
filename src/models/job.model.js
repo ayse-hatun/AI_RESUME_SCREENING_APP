@@ -43,6 +43,11 @@ const jobSchema = new mongoose.Schema({
         enum: ['remote', 'hybrid', 'in-office'],
         default: 'remote'
     },
+    type: {
+        type: String,
+        enum: ['Full-time', 'Part-time', 'Contract', 'Internship'],
+        default: 'Full-time'
+    },
     salaryRange: {
         min: {
             type: Number,

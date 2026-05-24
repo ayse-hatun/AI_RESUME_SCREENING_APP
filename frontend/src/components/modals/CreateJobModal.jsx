@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Briefcase, MapPin, Target, ShieldCheck, Loader2, Plus, GraduationCap, Sparkles, CheckCircle2, Link as LinkIcon, Check, AlertCircle } from 'lucide-react';
 import { createJob } from '../../api';
 
@@ -42,8 +43,9 @@ const CreateJobModal = ({ onClose, onJobCreated, initialData }) => {
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     department: initialData?.department || 'Engineering',
-    location: initialData?.location || 'Remote',
+    location: initialData?.location || '',
     type: initialData?.type || 'Full-time',
+    workType: initialData?.workType || 'remote',
     description: initialData?.description || '',
     requiredSkills: initialData?.requiredSkills || [],
     educationLevel: initialData?.educationLevel || "Bachelor's Degree",
@@ -108,9 +110,9 @@ const CreateJobModal = ({ onClose, onJobCreated, initialData }) => {
   };
 
   if (isSuccess) {
-    return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-background/80 backdrop-blur-md animate-fade-in overflow-y-auto">
-        <div className="glass-card w-full max-w-md p-6 sm:p-8 my-auto relative animate-slide-up flex flex-col items-center text-center max-h-[95vh] overflow-y-auto">
+    return createPortal(
+      <div className="fixed inset-0 z-[60] flex justify-center items-start p-2 sm:p-4 bg-background/80 backdrop-blur-md animate-fade-in overflow-y-auto">
+        <div className="glass-card w-full max-w-md p-6 sm:p-8 my-4 sm:my-8 relative animate-slide-up flex flex-col items-center text-center">
           <button onClick={onClose} className="absolute right-6 top-6 text-text-muted hover:text-white transition-colors">
             <X size={24} />
           </button>
@@ -148,13 +150,14 @@ const CreateJobModal = ({ onClose, onJobCreated, initialData }) => {
              </button>
           </div>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-background/80 backdrop-blur-md animate-fade-in overflow-y-auto">
-      <div className="glass-card w-full max-w-2xl p-5 sm:p-8 my-auto relative animate-slide-up max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[60] flex justify-center items-start p-2 sm:p-4 bg-background/80 backdrop-blur-md animate-fade-in overflow-y-auto">
+      <div className="glass-card w-full max-w-2xl p-5 sm:p-8 my-4 sm:my-8 relative animate-slide-up">
         <button onClick={onClose} className="absolute right-6 top-6 text-text-muted hover:text-white transition-colors">
           <X size={24} />
         </button>
@@ -205,6 +208,8 @@ const CreateJobModal = ({ onClose, onJobCreated, initialData }) => {
                 <option>Design</option>
                 <option>Product</option>
                 <option>Marketing</option>
+                <option>Human Resources</option>
+                <option>Administration</option>
               </select>
             </div>
             <div className="space-y-2">
@@ -212,7 +217,7 @@ const CreateJobModal = ({ onClose, onJobCreated, initialData }) => {
               <input
                 type="text"
                 className="input-field w-full"
-                placeholder="e.g. Remote / New York"
+                placeholder="e.g. Lahore, Pakistan"
                 value={formData.location}
                 autoComplete="new-password"
                 onChange={(e) => setFormData({...formData, location: e.target.value})}
@@ -247,10 +252,27 @@ const CreateJobModal = ({ onClose, onJobCreated, initialData }) => {
                 onChange={(e) => setFormData({...formData, type: e.target.value})}
               >
                 <option>Full-time</option>
+                <option>Part-time</option>
                 <option>Contract</option>
-                <option>Remote</option>
+                <option>Internship</option>
               </select>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-text-secondary">Workplace Type</label>
+              <select 
+                className="input-field w-full"
+                value={formData.workType}
+                onChange={(e) => setFormData({...formData, workType: e.target.value})}
+              >
+                <option value="remote">Remote</option>
+                <option value="in-office">On-site</option>
+                <option value="hybrid">Hybrid</option>
+              </select>
+            </div>
+            <div className="hidden sm:block"></div>
           </div>
 
           {/* Skills Section */}
@@ -350,7 +372,8 @@ const CreateJobModal = ({ onClose, onJobCreated, initialData }) => {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Upload, FileText, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { bulkUploadResumes } from '../../api';
 
@@ -96,9 +97,9 @@ const BulkUploadModal = ({ jobId, onClose, onUploadSuccess }) => {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-fade-in">
-      <div className="glass-card w-full max-w-xl p-8 relative animate-slide-up">
+  return createPortal(
+    <div className="fixed inset-0 z-[60] flex justify-center items-start p-2 sm:p-4 bg-background/80 backdrop-blur-md animate-fade-in overflow-y-auto">
+      <div className="glass-card w-full max-w-xl p-6 sm:p-8 my-4 sm:my-8 relative animate-slide-up">
         <button onClick={onClose} className="absolute right-6 top-6 text-text-muted hover:text-white transition-colors">
           <X size={24} />
         </button>
@@ -188,7 +189,8 @@ const BulkUploadModal = ({ jobId, onClose, onUploadSuccess }) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

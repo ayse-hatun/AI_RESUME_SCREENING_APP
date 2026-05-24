@@ -160,14 +160,14 @@ const CareersLanding = () => {
                       {job.title}
                     </h3>
                     
-                    <div className="flex items-center gap-4 text-text-secondary mt-auto">
+                    <div className="flex items-center gap-4 text-text-secondary mt-auto flex-wrap sm:flex-nowrap gap-y-2">
                       <div className="flex items-center gap-1.5 text-sm">
                         <MapPin size={16} />
-                        <span>{job.location}</span>
+                        <span>{job.location || 'Lahore, Pakistan'} ({job.workType === 'in-office' ? 'On-site' : job.workType === 'hybrid' ? 'Hybrid' : 'Remote'})</span>
                       </div>
                       <div className="flex items-center gap-1.5 text-sm border-l border-border pl-4">
                         <Briefcase size={16} />
-                        <span>Full-time</span>
+                        <span>{job.type || 'Full-time'}</span>
                       </div>
                     </div>
                   </div>

@@ -80,7 +80,10 @@ const CareersJobDetail = () => {
               {job.department || 'General'}
             </span>
             <span className="px-3 py-1 rounded-full bg-border/50 text-text-secondary text-xs font-bold uppercase tracking-wider">
-              Full-time
+              {job.type || 'Full-time'}
+            </span>
+            <span className="px-3 py-1 rounded-full bg-accent-primary/10 text-accent-primary text-xs font-bold uppercase tracking-wider">
+              {job.workType === 'in-office' ? 'On-site' : job.workType === 'hybrid' ? 'Hybrid' : 'Remote'}
             </span>
           </div>
           
@@ -93,7 +96,7 @@ const CareersJobDetail = () => {
               </div>
               <div>
                 <p className="text-xs text-text-tertiary uppercase font-bold tracking-tighter">Location</p>
-                <p className="font-medium">{job.location}</p>
+                <p className="font-medium">{job.location || 'Lahore, Pakistan'}</p>
               </div>
             </div>
             

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, CheckCircle2, AlertCircle, Award, Calendar, MapPin, ExternalLink, Download, Loader2, FileText } from 'lucide-react';
 import { updateResumeStage, fetchResumeById } from '../../api';
 
@@ -75,8 +76,8 @@ const CandidateModal = ({ resume, onClose, onUpdate }) => {
   const { screeningResult: ai } = currentResume;
 
   if (isProcessing) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
+    return createPortal(
+      <div className="fixed inset-0 z-50 flex justify-center items-start p-2 sm:p-4 bg-background/80 backdrop-blur-sm animate-fade-in overflow-y-auto">
         <style>{`
           @keyframes scanLine {
             0% { top: 0; }
@@ -85,7 +86,7 @@ const CandidateModal = ({ resume, onClose, onUpdate }) => {
           }
           .animate-scan-line { animation: scanLine 2s linear infinite; }
         `}</style>
-        <div className="glass-card w-full max-w-lg overflow-hidden flex flex-col items-center justify-center p-12 shadow-2xl border-border dark:border-white/10 animate-slide-up text-center relative">
+        <div className="glass-card w-full max-w-lg overflow-hidden flex flex-col items-center justify-center p-12 my-4 sm:my-8 shadow-2xl border-border dark:border-white/10 animate-slide-up text-center relative">
           
           <div className="relative w-28 h-36 mb-8 border-2 border-border dark:border-white/10 rounded-xl overflow-hidden bg-card shadow-inner">
             <div className="absolute inset-0 flex items-center justify-center text-text-muted opacity-50">
@@ -111,13 +112,14 @@ const CandidateModal = ({ resume, onClose, onUpdate }) => {
             <X size={20} />
           </button>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
-      <div className="glass-card w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border-border dark:border-white/10 animate-slide-up bg-white dark:bg-[#0f0f13]">
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex justify-center items-start p-2 sm:p-4 bg-background/80 backdrop-blur-sm animate-fade-in overflow-y-auto">
+      <div className="glass-card w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] my-4 sm:my-8 overflow-hidden flex flex-col shadow-2xl border-border dark:border-white/10 animate-slide-up bg-white dark:bg-[#0f0f13]">
         {/* Header */}
         <div className="p-6 border-b border-border flex justify-between items-center bg-card">
           <div className="flex items-center gap-4">
@@ -326,7 +328,8 @@ const CandidateModal = ({ resume, onClose, onUpdate }) => {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
