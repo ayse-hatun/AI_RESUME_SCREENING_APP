@@ -59,10 +59,29 @@ exports.getAllJobs = async (req, res) => {
     try {
         // Only return jobs created by the current recruiter
         const jobs = await Job.find({ createdBy: req.user._id }).sort({ createdAt: -1 });
+        
+        // Enhance each job with candidate count and average score
+        const enhancedJobs = await Promise.all(jobs.map(async (job) => {
+            const resumes = await Resume.find({ jobId: job._id });
+            const candidateCount = resumes.length;
+            
+            const completedResumes = resumes.filter(r => r.status === 'completed' && r.screeningResult?.matchScore != null);
+            const avgScore = completedResumes.length > 0
+                ? Math.round(completedResumes.reduce((sum, r) => sum + Number(r.screeningResult.matchScore), 0) / completedResumes.length)
+                : undefined;
+                
+            const jobObj = job.toObject();
+            return {
+                ...jobObj,
+                candidateCount,
+                avgScore
+            };
+        }));
+
         res.status(200).json({
             success: true,
-            count: jobs.length,
-            data: jobs
+            count: enhancedJobs.length,
+            data: enhancedJobs
         });
     } catch (error) {
         res.status(500).json({

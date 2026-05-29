@@ -115,69 +115,150 @@ function parseFromAddress(fromStr) {
     return { name: 'AI Resume Screener', email: fromStr.trim() };
 }
 
-// Router/helper to send email via HTTP APIs (Resend, SendGrid) to bypass Railway SMTP port blocks, or fallback to Nodemailer SMTP
-async function sendEmailHelper(mailOptions) {
-    const { from, to, subject, html } = mailOptions;
+// Centralized provider configuration
+const providers = [
+    {
+        name: 'Resend',
+        send: async (from, to, subject, html) => {
+            const apiKey = process.env.RESEND_API_KEY;
+            if (!apiKey || !apiKey.trim()) {
+                throw new Error('Resend API key is not configured');
+            }
+            const response = await axios.post('https://api.resend.com/emails', {
+                from,
+                to: [to],
+                subject,
+                html
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${apiKey.trim()}`,
+                    'Content-Type': 'application/json'
+                },
+                timeout: 8000
+            });
+            return { messageId: response.data.id || 'resend-success' };
+        }
+    },
+    {
+        name: 'Brevo',
+        send: async (from, to, subject, html) => {
+            const apiKey = process.env.BREVO_API_KEY || process.env.SENDINBLUE_API_KEY;
+            if (!apiKey || !apiKey.trim()) {
+                throw new Error('Brevo API key is not configured');
+            }
+            const parsedFrom = parseFromAddress(from);
+            const response = await axios.post('https://api.brevo.com/v3/smtp/email', {
+                sender: { name: parsedFrom.name, email: parsedFrom.email },
+                to: [{ email: to }],
+                subject,
+                htmlContent: html
+            }, {
+                headers: {
+                    'api-key': apiKey.trim(),
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                timeout: 8000
+            });
+            return { messageId: response.data.messageId || 'brevo-success' };
+        }
+    },
+    {
+        name: 'SMTP',
+        send: async (from, to, subject, html) => {
+            if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+                throw new Error('SMTP credentials are not configured');
+            }
+            const info = await transporter.sendMail({ from, to, subject, html });
+            return { messageId: info.messageId || 'smtp-success' };
+        }
+    }
+];
+
+/**
+ * Centralized email sending function with multi-provider failover, retry logic, and logging.
+ * @param {Object} options
+ * @param {string} options.to - Recipient email
+ * @param {string} options.subject - Email subject
+ * @param {string} options.html - Email HTML body
+ * @param {string} [options.from] - Sender email (optional, defaults to getFromAddress())
+ */
+async function sendEmail({ to, subject, html, from }) {
+    const sender = from || getFromAddress();
+
+    // Validate recipient and skip if empty or a placeholder
+    if (!to || to.trim() === '' || to === 'bulk-upload@pending.ai' || to.includes('pending.ai')) {
+        console.log(`ℹ️ [Email Service] Skipping sendEmail: "${to}" is empty, missing, or a placeholder.`);
+        return { skipped: true, reason: 'placeholder_or_empty_email' };
+    }
+
     let lastError = null;
 
-    // 1. Resend HTTP API
-    if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.trim()) {
-        console.log(`📡 [Email Service] Sending email via Resend HTTP API to ${to}...`);
-        try {
-            const response = await axios.post('https://api.resend.com/emails', {
-                from: from,
-                to: [to],
-                subject: subject,
-                html: html
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${process.env.RESEND_API_KEY.trim()}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            console.log(`✅ [Resend] Email sent to ${to} | ID: ${response.data.id}`);
-            return { messageId: response.data.id };
-        } catch (error) {
-            const errMsg = error.response?.data?.message || error.response?.data?.error || error.message;
-            console.error(`❌ [Resend] Failed to send email via HTTP API:`, errMsg);
-            lastError = new Error(`Resend API Error: ${errMsg}`);
+    // Check configuration status of providers
+    const isConfigured = (name) => {
+        if (name === 'Resend') {
+            return !!(process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.trim());
         }
+        if (name === 'Brevo') {
+            return !!((process.env.BREVO_API_KEY && process.env.BREVO_API_KEY.trim()) || 
+                      (process.env.SENDINBLUE_API_KEY && process.env.SENDINBLUE_API_KEY.trim()));
+        }
+        if (name === 'SMTP') {
+            return !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
+        }
+        return false;
+    };
+
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    for (const provider of providers) {
+        if (!isConfigured(provider.name)) {
+            console.log(`ℹ️ [Email Service] Provider [${provider.name}] is not configured. Skipping.`);
+            continue;
+        }
+
+        const maxRetries = 2; // total of 3 attempts
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                if (attempt > 0) {
+                    console.log(`📡 [Email Service] [${provider.name}] Retrying send to ${to} (Attempt ${attempt + 1}/${maxRetries + 1})...`);
+                } else {
+                    console.log(`📡 [Email Service] [${provider.name}] Attempting to send email to ${to}...`);
+                }
+
+                const result = await provider.send(sender, to, subject, html);
+                console.log(`✅ [Email Service] [${provider.name}] Email sent successfully to ${to} | ID: ${result.messageId}`);
+                return result; // Success, return early
+            } catch (error) {
+                const responseData = error.response?.data;
+                const errorDetails = responseData ? (typeof responseData === 'object' ? JSON.stringify(responseData) : responseData) : error.message;
+                console.error(`⚠️ [Email Service] [${provider.name}] Attempt ${attempt + 1} failed: ${errorDetails}`);
+                lastError = error;
+
+                if (attempt < maxRetries) {
+                    const backoffMs = 1000 * (attempt + 1);
+                    console.log(`⏳ [Email Service] Waiting ${backoffMs}ms before retrying...`);
+                    await delay(backoffMs);
+                }
+            }
+        }
+
+        console.error(`❌ [Email Service] [${provider.name}] All attempts failed. Failing over to next provider.`);
     }
 
-    // 2. SendGrid HTTP API
-    if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY.trim()) {
-        console.log(`📡 [Email Service] Sending email via SendGrid HTTP API to ${to}...`);
-        try {
-            const parsedFrom = parseFromAddress(from);
-            const response = await axios.post('https://api.sendgrid.com/v3/mail/send', {
-                personalizations: [{ to: [{ email: to }] }],
-                from: { email: parsedFrom.email, name: parsedFrom.name },
-                subject: subject,
-                content: [{ type: 'text/html', value: html }]
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${process.env.SENDGRID_API_KEY.trim()}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            console.log(`✅ [SendGrid] Email sent to ${to}`);
-            return { messageId: response.headers['x-message-id'] || 'sendgrid-success' };
-        } catch (error) {
-            const errMsg = error.response?.data?.errors?.[0]?.message || error.response?.data?.message || error.message;
-            console.error(`❌ [SendGrid] Failed to send email via HTTP API:`, errMsg);
-            lastError = new Error(`SendGrid API Error: ${errMsg}`);
-        }
-    }
+    const finalErrorMessage = lastError ? lastError.message : 'No email providers configured or available.';
+    console.error(`🚨 [Email Service] Email delivery completely failed for ${to}. Error: ${finalErrorMessage}`);
+    throw new Error(`Email delivery failed: ${finalErrorMessage}`);
+}
 
-    // 3. Fallback: Nodemailer SMTP
-    console.log(`🔌 [Email Service] Falling back to Nodemailer SMTP for ${to}...`);
-    try {
-        const info = await transporter.sendMail(mailOptions);
-        return info;
-    } catch (smtpError) {
-        console.error(`❌ [Nodemailer SMTP] Failed to send email:`, smtpError.message);
-        throw lastError || smtpError;
-    }
+// Router/helper kept for backward compatibility with existing functions
+async function sendEmailHelper(mailOptions) {
+    return sendEmail({
+        to: mailOptions.to,
+        subject: mailOptions.subject,
+        html: mailOptions.html,
+        from: mailOptions.from
+    });
 }
 
 
@@ -261,22 +342,25 @@ async function sendScreeningResultEmail(toEmail, candidateName, jobTitle, screen
  * Verify the email transporter is working
  */
 async function verifyEmailConnection() {
+    let verified = false;
     if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.trim()) {
         console.log('✅ Resend HTTP API connection verified (API Key configured)');
-        return true;
+        verified = true;
     }
-    if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY.trim()) {
-        console.log('✅ SendGrid HTTP API connection verified (API Key configured)');
-        return true;
+    if ((process.env.BREVO_API_KEY && process.env.BREVO_API_KEY.trim()) || (process.env.SENDINBLUE_API_KEY && process.env.SENDINBLUE_API_KEY.trim())) {
+        console.log('✅ Brevo HTTP API connection verified (API Key configured)');
+        verified = true;
     }
-    try {
-        await transporter.verify();
-        console.log('✅ Gmail SMTP connection verified');
-        return true;
-    } catch (error) {
-        console.error('❌ Gmail SMTP verification failed:', error.message);
-        return false;
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+        try {
+            await transporter.verify();
+            console.log('✅ Gmail SMTP connection verified');
+            verified = true;
+        } catch (error) {
+            console.warn('⚠️ Gmail SMTP verification failed:', error.message);
+        }
     }
+    return verified;
 }
 
 async function sendStatusUpdateEmail(toEmail, candidateName, jobTitle, stage, _shortReason = '') {
@@ -496,6 +580,7 @@ module.exports = {
     verifyEmailConnection, 
     sendStatusUpdateEmail,
     sendVerificationEmail,
-    sendPasswordResetEmail
+    sendPasswordResetEmail,
+    sendEmail
 };
 

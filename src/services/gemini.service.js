@@ -40,12 +40,15 @@ const MODEL_CACHE_TTL = 30 * 60 * 1000;
 
 const PREFERRED_OPENROUTER_MODELS = [
     'google/gemini-2.0-flash-exp:free',
+    'google/gemma-4-31b-it:free',
+    'google/gemma-4-26b-a4b-it:free',
+    'deepseek/deepseek-v4-flash:free',
     'google/gemma-3-27b-it:free',
     'meta-llama/llama-3.3-70b-instruct:free',
     'deepseek/deepseek-r1:free',
+    'meta-llama/llama-3.2-3b-instruct:free',
     'qwen/qwen3-235b-a22b:free',
     'meta-llama/llama-3.1-8b-instruct:free',
-    'meta-llama/llama-3.2-3b-instruct:free',
 ];
 
 async function discoverFreeModels() {
